@@ -7,7 +7,7 @@ import numpy as np, os
 class IdTrackerAIWindow(BaseWidget):
 
 	def __init__(self, parent=None):
-		BaseWidget.__init__(self, 'IdTrackerAI', parent_win=parent)
+		BaseWidget.__init__(self, 'IdTracker.ai', parent_win=parent)
 
 		self.mainwindow = parent
 
@@ -51,6 +51,7 @@ class IdTrackerAIWindow(BaseWidget):
 				centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
 				fragment   = blob.fragment_identifier
 				crossing   = blob.is_a_crossing
+				contour    = blob.contour
 
 				for identity, centroid in zip(identities, centroids):
 
@@ -63,6 +64,9 @@ class IdTrackerAIWindow(BaseWidget):
 						path.show_object_name = True
 						path.name = 'path'
 						paths[identity] = path
+
+						cnt = obj.create_contours()
+						cnt.name = 'contours'
 
 						c = obj.create_value()
 						c.name = 'crossings'
@@ -78,10 +82,16 @@ class IdTrackerAIWindow(BaseWidget):
 						v2 = obj.create_value()
 						v2.name = 'switch identity'
 
+						obj.idtrackerai_path = path
+						path.contours = cnt
 						path.crossings = c
+						path.fragments = f
+						path.modifications = v1
+						path.switch_identity = v2
 
 					centroid = (int(round(centroid[0]/resolution)), int(round(centroid[1]/resolution))) if centroid is not None else None
 
+					paths[identity].contours.set_contour(frame_index, np.int32(np.rint(contour/resolution)) )
 					paths[identity][frame_index]     = centroid
 					crossings[identity][frame_index] = 1 if crossing else 0
 					fragments[identity][frame_index] = fragment

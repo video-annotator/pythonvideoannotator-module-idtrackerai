@@ -12,7 +12,7 @@ class Module(object):
 		self._idtrackerai_win = IdTrackerAIWindow(parent=self)
 
 		self.mainmenu[1]['Modules'].append({
-			'IdTrackerAi': self.__show_idtrackerai_window,
+			'IdTracker.ai': self.__show_idtrackerai_window,
 			'icon': conf.PYFORMS_ICON_EVENTTIMELINE_EXPORT
 		})
 
