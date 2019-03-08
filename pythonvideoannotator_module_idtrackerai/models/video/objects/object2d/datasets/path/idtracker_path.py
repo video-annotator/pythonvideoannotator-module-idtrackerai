@@ -74,9 +74,9 @@ class IdTrackerPath(object):
             cnt1.set_contour(i, cnt2[i], cnt2.get_angle(i))
 
         for i in range(begin2, end2 + 1):
-            path2[i] = tmp[i]
+            path2[i] = tmp[i] if len(tmp)<i else None
+            cnt2.set_contour(i, cnt_tmp[i] if len(cnt_tmp)<i else None, angles_tmp[i] if len(angles_tmp)<i else None)
             path2.switch_identity[i] = 1
-            cnt2.set_contour(i, cnt_tmp[i], angles_tmp[i])
 
     def on_click(self, event, x, y):
         if event.button== 1:
