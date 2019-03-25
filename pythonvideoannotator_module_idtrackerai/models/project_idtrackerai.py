@@ -5,7 +5,12 @@ class IdTrackerProject(object):
 
 
     def load(self, data, project_path=None):
-
+        """
+        Check if the the path includes an idtrackerai project, if so load it.
+        :param data:
+        :param project_path:
+        :return:
+        """
         blobs_path  = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
         vidobj_path = os.path.join(project_path, 'video_object.npy')
 
@@ -20,6 +25,7 @@ class IdTrackerProject(object):
             return data
         else:
             return super().load(data, project_path)
+
 
     def __update_progress_evt(self, progress_count, max_count=None):
         progress = self.mainwindow.progress_bar

@@ -24,6 +24,8 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
     paths = {}
     crossings = {}
     fragments = {}
+    modifications = {}
+    idswitchs = {}
 
     # update the progress
     if progress_event is not None:
@@ -66,10 +68,20 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
                     f.name = 'path fragments'
                     fragments[identity] = f
 
+                    m = obj.create_value()
+                    m.name = 'modifications'
+                    modifications[identity] = m
+
+                    i = obj.create_value()
+                    i.name = 'switch identities'
+                    idswitchs[identity] = i
+
                     obj.idtrackerai_path = path
-                    path.contours = cnt
+                    path.contours  = cnt
                     path.crossings = c
                     path.fragments = f
+                    path.modifications = m
+                    path.switch_identity = i
 
                 centroid = (int(round(centroid[0] / resolution)),
                             int(round(centroid[1] / resolution))) if centroid is not None else None
