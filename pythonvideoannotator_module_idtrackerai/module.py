@@ -17,15 +17,16 @@ class Module(object):
 		})
 
 	def __update_progress_evt(self, progress_count, max_count=None):
+		progress = self.progress_bar
+
 		if max_count is not None:
-			self._progress.max = max_count
-			self._progress.value = 0
-			self._progress.show()
-		elif self._progress.max==progress_count:
-			self._progress.hide()
+			progress.max = max_count
+			progress.value = 0
+			progress.show()
+		elif progress.max == progress_count:
+			progress.hide()
 		else:
-			self._progress.value = progress_count
-		
+			progress.value = progress_count
 
 	def __import_idtrackerai_project_evt(self):
 

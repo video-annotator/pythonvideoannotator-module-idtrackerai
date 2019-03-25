@@ -7,18 +7,13 @@ class IdTrackerPath(object):
     def __init__(self, obj=None):
         super().__init__(obj)
 
-        self.sel_object_win = SelectObjectWindow(title='Switch identification with',
-                                                 path=self,
-                                                 parent_win=obj.mainwindow)
+        self.sel_object_win = SelectObjectWindow(
+            title='Switch identification with',
+            path=self,
+            parent_win=obj.mainwindow
+        )
 
-        self._switchid_btn = ControlButton('Switch identification', default=self.__switchid_btn_evt)
 
-        formset = [
-            'h3:IdTracker.ai',
-            '_switchid_btn'
-        ]
-
-        self.formset += formset
 
 
     def __switchid_btn_evt(self):
@@ -60,23 +55,21 @@ class IdTrackerPath(object):
             else:
                 break
 
-
         cnt1 = path1.contours
         cnt2 = path2.contours
 
-        tmp = list(path1.data)
-        cnt_tmp = np.array(cnt1.data)
+        tmp        = list(path1.data)
+        cnt_tmp    = np.array(cnt1.data)
         angles_tmp = list(cnt1.angles)
 
         for i in range(begin1, end1 + 1):
-            path1[i] = path2[i]
-            path1.switch_identity[i] = 1
             cnt1.set_contour(i, cnt2[i], cnt2.get_angle(i))
+        path1.switch_identity(path2, begin=begin1, end=end1)
 
         for i in range(begin2, end2 + 1):
-            path2[i] = tmp[i] if len(tmp)<i else None
             cnt2.set_contour(i, cnt_tmp[i] if len(cnt_tmp)<i else None, angles_tmp[i] if len(angles_tmp)<i else None)
-            path2.switch_identity[i] = 1
+        path2.switch_identity(tmp, begin=begin1, end=end1)
+
 
     def on_click(self, event, x, y):
         if event.button== 1:
@@ -95,8 +88,6 @@ class IdTrackerPath(object):
         data['contours-value']  = self.contours.name
         data['crossings-value'] = self.crossings.name
         data['fragments-value'] = self.fragments.name
-        data['modifications-value'] = self.modifications.name
-        data['switch-identity-value'] = self.switch_identity.name
 
         return super().save(data, dataset_path)
 
@@ -108,17 +99,14 @@ class IdTrackerPath(object):
         if 'fragments-value' in data:
             self._fragments_val_name = data['fragments-value']
 
-        if 'modifications-value' in data:
-            self._modifications_val_name = data['modifications-value']
-
-        if 'switch-identity-value' in data:
-            self._switch_identity_val_name = data['switch-identity-value']
-
         if 'contours-value' in data:
             self._contours_val_name = data['contours-value']
 
 
         return super().load(data, dataset_path)
+
+
+
 
     def post_load(self):
 
@@ -130,16 +118,6 @@ class IdTrackerPath(object):
             self.fragments = self.object2d.find_dataset(self._fragments_val_name)
             del self._fragments_val_name
 
-        if hasattr(self, '_modifications_val_name'):
-            self.modifications = self.object2d.find_dataset(self._modifications_val_name)
-            del self._modifications_val_name
-
-        if hasattr(self, '_switch_identity_val_name'):
-            self.switch_identity = self.object2d.find_dataset(self._switch_identity_val_name)
-            del self._switch_identity_val_name
-
         if hasattr(self, '_contours_val_name'):
             self.contours = self.object2d.find_dataset(self._contours_val_name)
             del self._contours_val_name
-
-

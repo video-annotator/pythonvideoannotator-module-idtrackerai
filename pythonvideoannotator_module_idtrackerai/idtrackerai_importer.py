@@ -66,18 +66,10 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
                     f.name = 'path fragments'
                     fragments[identity] = f
 
-                    v1 = obj.create_value()
-                    v1.name = 'path modifications'
-
-                    v2 = obj.create_value()
-                    v2.name = 'switch identity'
-
                     obj.idtrackerai_path = path
                     path.contours = cnt
                     path.crossings = c
                     path.fragments = f
-                    path.modifications = v1
-                    path.switch_identity = v2
 
                 centroid = (int(round(centroid[0] / resolution)),
                             int(round(centroid[1] / resolution))) if centroid is not None else None
