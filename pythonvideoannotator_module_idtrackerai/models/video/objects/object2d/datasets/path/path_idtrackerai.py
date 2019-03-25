@@ -123,9 +123,10 @@ class IdTrackerPath(object):
 
     def post_load(self):
 
-        if hasattr(self, '_crossing_val_name'):
-            self.crossings = self.object2d.find_dataset(self._crossing_val_name)
-            del self._crossing_val_name
+
+        if hasattr(self, '_crossings_val_name'):
+            self.crossings = self.object2d.find_dataset(self._crossings_val_name)
+            del self._crossings_val_name
 
         if hasattr(self, '_fragments_val_name'):
             self.fragments = self.object2d.find_dataset(self._fragments_val_name)
