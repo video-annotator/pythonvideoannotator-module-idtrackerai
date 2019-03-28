@@ -59,20 +59,26 @@ class IdTrackerPath(object):
         cnt2 = path2.contours
 
         tmp        = list(path1.data)
-        cnt_tmp    = np.array(cnt1.data)
+        cnt_tmp    = cnt1.data.copy()
         angles_tmp = list(cnt1.angles)
+
+        cnt1.data[begin1:end1+1] = cnt2.data[begin1:end1+1].copy()
+
+        print('obj', cnt1.object2d.name, 'start:', begin1, 'end:', end1+1)
 
         for i in range(begin1, end1 + 1):
             path1[i] = path2[i]
             path1.switch_identity[i] = 1
-            cnt1.set_contour(i, cnt2[i], cnt2.get_angle(i))
+            cnt1.set_angle(i, cnt2.angles[i])
 
-        for i in range(begin2, end2 + 1):
+        print('obj', cnt2.object2d.name, 'start:', begin2, 'end:', end2+1)
+        cnt2.data[begin2:end2+1] = cnt_tmp[begin2:end2+1]
+        for i in range(begin2, end2+1):
             path2[i] = tmp[i]
             path2.switch_identity[i] = 1
-            cnt2.set_contour(i, cnt_tmp[i] if len(cnt_tmp)<i else None, angles_tmp[i] if len(angles_tmp)<i else None)
+            cnt2.set_angle(i, angles_tmp[i])
 
-
+       
     def on_click(self, event, x, y):
         if event.button== 1:
             frame_index = self.mainwindow.timeline.value

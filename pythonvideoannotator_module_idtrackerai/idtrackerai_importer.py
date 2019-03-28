@@ -17,8 +17,10 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
 
     resolution = v._resolution_reduction
 
+    videofile = os.path.basename(v._video_path)
+
     video = project.create_video()
-    video.filepath = v._video_path
+    video.filepath = os.path.join(project_path, '..',videofile)
 
     objs = {}
     paths = {}
