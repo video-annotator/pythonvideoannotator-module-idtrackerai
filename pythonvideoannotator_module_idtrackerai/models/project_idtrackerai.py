@@ -30,7 +30,7 @@ class IdTrackerProject(object):
     def __update_progress_evt(self, progress_count, max_count=None):
         progress = self.mainwindow.progress_bar
 
-        if max_count is not None:
+        if max_count is not None and progress_count==0:
             progress.max = max_count
             progress.value = 0
             progress.show()

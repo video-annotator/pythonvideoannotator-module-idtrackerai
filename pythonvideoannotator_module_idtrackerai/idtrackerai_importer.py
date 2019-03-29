@@ -1,4 +1,9 @@
-import numpy as np, os
+import numpy as np, os, sys
+
+import sys
+
+
+
 
 def import_idtrackerai_project(project, project_path, progress_event=None):
     """
@@ -29,23 +34,26 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
     modifications = {}
     idswitchs = {}
 
+
+    total_blobs = len(b.blobs_in_video)
+
     # update the progress
     if progress_event is not None:
-        progress_event(0, max_count=len(b.blobs_in_video))
+        progress_event(0, max_count=total_blobs)
 
     for frame_index, frame_data in enumerate(b.blobs_in_video):
 
         # update the progress
         if progress_event is not None:
-            progress_event(frame_index)
+            progress_event(frame_index, max_count=total_blobs)
 
         for blob in frame_data:
 
             identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
-            centroids = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
-            fragment = blob.fragment_identifier
-            crossing = blob.is_a_crossing
-            contour = blob.contour
+            centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
+            fragment   = blob.fragment_identifier
+            crossing   = blob.is_a_crossing
+            contour    = blob.contour
 
             for identity, centroid in zip(identities, centroids):
 
@@ -95,4 +103,4 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
 
     # update the progress
     if progress_event is not None:
-        progress_event( len(b.blobs_in_video) )
+        progress_event( len(b.blobs_in_video), max_count=total_blobs )
