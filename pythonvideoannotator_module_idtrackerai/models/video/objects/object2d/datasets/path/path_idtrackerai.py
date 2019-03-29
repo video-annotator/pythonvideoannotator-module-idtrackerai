@@ -1,6 +1,6 @@
 from pyforms.controls import ControlButton
 from .sel_object_win import SelectObjectWindow
-import numpy as np
+import numpy as np, copy
 
 class IdTrackerPath(object):
 
@@ -58,9 +58,9 @@ class IdTrackerPath(object):
         cnt1 = path1.contours
         cnt2 = path2.contours
 
-        tmp        = list(path1.data)
+        tmp        = copy.deepcopy(path1.data)
         cnt_tmp    = cnt1.data.copy()
-        angles_tmp = list(cnt1.angles)
+        angles_tmp = copy.deepcopy(cnt1.angles)
 
         cnt1.data[begin1:end1+1] = cnt2.data[begin1:end1+1].copy()
 
@@ -88,23 +88,6 @@ class IdTrackerPath(object):
 
 
 
-    def save(self, data, dataset_path=None):
-        """
-        Saves the connection between the values required for the idtrackerai plugin
-        :param dict data: Data from the path conf json.
-        :param str dataset_path: Path to the json.
-        :return: data
-        """
-        data['contours-value']  = self.contours.name
-        data['crossings-value'] = self.crossings.name
-        data['fragments-value'] = self.fragments.name
-        data['modifications-value'] = self.modifications.name
-        data['switch-identity-value'] = self.switch_identity.name
-
-        return super().save(data, dataset_path)
-
-
-
     def load(self, data, dataset_path=None):
 
         if 'crossings-value' in data:
@@ -129,23 +112,26 @@ class IdTrackerPath(object):
 
     def post_load(self):
 
+        modifications = self.object2d.find_dataset('modifications')
+        crossings = self.object2d.find_dataset('crossings')
+        fragments = self.object2d.find_dataset('path fragments')
+        contours  = self.object2d.find_dataset('contours')
+        switch    = self.object2d.find_dataset('switch identities')
 
-        if hasattr(self, '_crossings_val_name'):
-            self.crossings = self.object2d.find_dataset(self._crossings_val_name)
-            del self._crossings_val_name
+        if modifications is not None:
+            self.modifications = modifications
 
-        if hasattr(self, '_fragments_val_name'):
-            self.fragments = self.object2d.find_dataset(self._fragments_val_name)
-            del self._fragments_val_name
+        if fragments is not None:
+            self.fragments = fragments
 
-        if hasattr(self, '_contours_val_name'):
-            self.contours = self.object2d.find_dataset(self._contours_val_name)
-            del self._contours_val_name
+        if contours is not None:
+            self.contours = contours
 
-        if hasattr(self, '_modifications_val_name'):
-            self.modifications = self.object2d.find_dataset(self._modifications_val_name)
-            del self._modifications_val_name
+        if switch is not None:
+            self.switch_identity = switch
 
-        if hasattr(self, '_switch_identity_val_name'):
-            self.switch_identity = self.object2d.find_dataset(self._switch_identity_val_name)
-            del self._switch_identity_val_name
+        if crossings is not None:
+            self.crossings = crossings
+
+
+        self.object2d.idtrackerai_path = self
