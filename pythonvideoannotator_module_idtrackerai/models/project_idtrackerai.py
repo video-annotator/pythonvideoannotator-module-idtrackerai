@@ -3,6 +3,23 @@ from ..idtrackerai_importer import import_idtrackerai_project
 
 class IdTrackerProject(object):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__( *args, **kwargs)
+
+        # this flag indicates if the proje
+        self._is_idtrackerai_project = False
+
+    def save(self, data={}, project_path=None):
+        if self._is_idtrackerai_project:
+
+            d = self._obj._data
+            d.disconnect()
+            np.save(self._obj.path, d)
+
+            return {}
+        else:
+            return super().save(data, project_path)
+
 
     def load(self, data, project_path=None):
         """
@@ -24,16 +41,21 @@ class IdTrackerProject(object):
             )
             """
 
+            self._is_idtrackerai_project = True
+
             v = np.load(vidobj_path).item()
             video = self.create_video()
             video.filepath = os.path.join(project_path, '..', os.path.basename(v._video_path))
 
-            obj = video.create_idtrackerai_object()
-            obj.path = blobs_path
+            self._directory = True
+
+            self._obj = video.create_idtrackerai_object()
+            self._obj.path = blobs_path
 
             return data
         else:
             return super().load(data, project_path)
+
 
 
     def __update_progress_evt(self, progress_count, max_count=None):
