@@ -1,4 +1,4 @@
-import os
+import os, numpy as np
 from ..idtrackerai_importer import import_idtrackerai_project
 
 class IdTrackerProject(object):
@@ -16,11 +16,20 @@ class IdTrackerProject(object):
 
         if os.path.exists(blobs_path) and os.path.exists(vidobj_path):
 
+            """
             import_idtrackerai_project(
                 self,
                 project_path,
                 progress_event=self.__update_progress_evt
             )
+            """
+
+            v = np.load(vidobj_path).item()
+            video = self.create_video()
+            video.filepath = os.path.join(project_path, '..', os.path.basename(v._video_path))
+
+            obj = video.create_idtrackerai_object()
+            obj.path = blobs_path
 
             return data
         else:
