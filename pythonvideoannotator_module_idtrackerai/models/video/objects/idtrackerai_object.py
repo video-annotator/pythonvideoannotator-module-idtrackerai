@@ -2,6 +2,7 @@ from pythonvideoannotator_models.models.video.objects.video_object import VideoO
 from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
 from pyforms.controls import ControlText
 from pyforms.basewidget import BaseWidget
+from AnyQt import QtCore
 from confapp import conf
 import numpy as np, cv2, math
 
@@ -33,8 +34,6 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
         self.treenode = self.tree.create_child(self.name, icon=conf.ANNOTATOR_ICON_OBJECT, parent=self.video.treenode)
         self.treenode.win = self
 
-    def on_click(self, event, x, y):
-        pass
 
     def draw(self, frame, frame_index):
 
@@ -46,8 +45,6 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
             identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
             centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
-            fragment   = blob.fragment_identifier
-            crossing   = blob.is_a_crossing
             contour    = blob.contour
 
             for identity, centroid in zip(identities, centroids):
@@ -94,51 +91,94 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     def on_click(self, event, x, y):
 
-        p0 = x, y
+        p0          = x, y
         frame_index = self.mainwindow.timeline.value
 
+        # blobs in the current frame
         blobs = self._data.blobs_in_video[frame_index]
 
         for blob in blobs:
+
             identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
             centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
 
             for identity, p1 in zip(identities, centroids):
+
+                # check if which blob was selected
                 if math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)<10:
-                    self._selected_id = identity
+
                     self.mainwindow.player.stop()
-                    new_blob_identity = self.input_int('Type in the new identity', title='New identity', default=identity)
+
+                    self._selected_id = identity
+
+                    # ask the new blob identity
+                    new_blob_identity = self.input_int(
+                        'Type in the new identity',
+                        title='New identity',
+                        default=identity
+                    )
+
+                    # Update only if the new identity is different from the old one.
                     if new_blob_identity!=identity:
+
                         blob._user_generated_identity = new_blob_identity
 
                         modified_blob = blob
                         # to take into account the modification already done in the current frame
-                        count_past_corrections = 1
+                        count_past_corrections   = 1
                         count_future_corrections = 0
-                        new_blob_identity = modified_blob.user_generated_identity
+                        new_blob_identity        = modified_blob.user_generated_identity
+
                         if modified_blob.is_an_individual:
-                            print("is and individual")
-                            print("fragment_identifier ", modified_blob.fragment_identifier)
                             current = modified_blob
 
                             while len(current.next) == 1 and \
                                 current.next[0].fragment_identifier == modified_blob.fragment_identifier:
-                                print("in first while")
+
                                 current.next[0]._user_generated_identity = new_blob_identity
                                 current = current.next[0]
                                 count_future_corrections += 1
 
                             current = modified_blob
-
                             while len(current.previous) == 1 and \
                                 current.previous[0].fragment_identifier == modified_blob.fragment_identifier:
-                                print("in second while")
                                 current.previous[0]._user_generated_identity = new_blob_identity
                                 current = current.previous[0]
                                 count_past_corrections += 1
 
                     self.mainwindow.player.refresh()
                     break
+
+
+
+    def __jump2next_crossing(self):
+        frame_index = self.mainwindow.timeline.value
+        frames = self._data.blobs_in_video
+
+        for i in range(frame_index+1, len(frames) ):
+            for blob in frames[i]:
+                if blob.is_a_crossing:
+                    self.mainwindow.timeline.value = blob.frame_number
+                    return
+
+    def __jump2previous_crossing(self):
+        frame_index = self.mainwindow.timeline.value
+        frames = self._data.blobs_in_video
+
+        for i in range(frame_index-1, -1, -1):
+            for blob in frames[i]:
+                if blob.is_a_crossing:
+                    self.mainwindow.timeline.value = blob.frame_number
+                    return
+
+    def key_release_event(self, evt):
+
+        if evt.key() == QtCore.Qt.Key_E:
+            self.__jump2next_crossing()
+
+        elif evt.key() == QtCore.Qt.Key_Q:
+            self.__jump2previous_crossing()
+
 
     ######################################################################
     ### PROPERTIES #######################################################

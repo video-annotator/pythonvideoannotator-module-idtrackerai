@@ -1,6 +1,7 @@
 from .sel_objects_win import SelectObjectsWindow
 from pyforms.controls import ControlButton
 from .objects.idtrackerai_object import IdtrackeraiObject
+from AnyQt import QtCore
 from confapp import conf
 
 class IdTrackerVideo(object):

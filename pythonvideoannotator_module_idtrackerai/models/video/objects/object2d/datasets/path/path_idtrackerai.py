@@ -1,6 +1,8 @@
 from pyforms.controls import ControlButton
 from .sel_object_win import SelectObjectWindow
+from AnyQt import QtCore
 import numpy as np, copy
+
 
 class IdTrackerPath(object):
 
@@ -64,14 +66,11 @@ class IdTrackerPath(object):
 
         cnt1.data[begin1:end1+1] = cnt2.data[begin1:end1+1].copy()
 
-        print('obj', cnt1.object2d.name, 'start:', begin1, 'end:', end1+1)
-
         for i in range(begin1, end1 + 1):
             path1[i] = path2[i]
             path1.switch_identity[i] = 1
             cnt1.set_angle(i, cnt2.angles[i])
 
-        print('obj', cnt2.object2d.name, 'start:', begin2, 'end:', end2+1)
         cnt2.data[begin2:end2+1] = cnt_tmp[begin2:end2+1]
         for i in range(begin2, end2+1):
             path2[i] = tmp[i]
@@ -132,6 +131,5 @@ class IdTrackerPath(object):
 
         if crossings is not None:
             self.crossings = crossings
-
 
         self.object2d.idtrackerai_path = self
