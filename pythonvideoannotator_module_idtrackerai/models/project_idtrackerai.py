@@ -14,6 +14,10 @@ class IdTrackerProject(object):
 
             d = self._obj._data
             d.disconnect()
+
+            path = self._obj.path
+            basepath, filename = os.path.basename()
+
             np.save(self._obj.path, d)
 
             return {}
@@ -32,14 +36,6 @@ class IdTrackerProject(object):
         vidobj_path = os.path.join(project_path, 'video_object.npy')
 
         if os.path.exists(blobs_path) and os.path.exists(vidobj_path):
-
-            """
-            import_idtrackerai_project(
-                self,
-                project_path,
-                progress_event=self.__update_progress_evt
-            )
-            """
 
             self._is_idtrackerai_project = True
 

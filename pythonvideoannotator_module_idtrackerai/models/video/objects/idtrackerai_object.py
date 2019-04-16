@@ -44,8 +44,6 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
         for blob in blobs:
 
-            print(blob.next, blob.previous)
-
             identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
             centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
             fragment   = blob.fragment_identifier
