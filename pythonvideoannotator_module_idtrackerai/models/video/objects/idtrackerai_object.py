@@ -1,34 +1,51 @@
 from pythonvideoannotator_models.models.video.objects.video_object import VideoObject
+from idtrackerai.postprocessing.assign_them_all import close_trajectories_gaps
 from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
 from pyforms.controls import ControlText
+from pyforms.controls import ControlButton
 from pyforms.basewidget import BaseWidget
 from AnyQt import QtCore
 from confapp import conf
-import numpy as np, cv2, math
+import numpy as np, cv2, math, os
+
 
 class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     def __init__(self, video):
 
         self._nametxt = ControlText('Name', default='Untitled')
+        self._closepaths_btn = ControlButton('Close trajectories', default=self.__close_trajectories_gaps)
 
         IModelGUI.__init__(self)
         VideoObject.__init__(self)
         BaseWidget.__init__(self, 'IdtrackerAi Object', parent_win=video)
 
-        self._path = None
-        self._data = None
-
         self._video = video
         self._video += self
+        self.create_tree_nodes()
+
+        self.video_object     = None # IdtrackerAI VideoObject
+        self.list_of_blobs    = None # IdtrackerAI ListOfBlobs
+        self.list_of_framents = None # IdtrackerAI ListOfFragments
 
         self._selected_id = None
 
-        self.create_tree_nodes()
-
-        self.formset = ['_nametxt']
+        self.formset = ['_nametxt', '_closepaths_btn']
 
 
+    def save(self, data={}, project_path=None):
+        self.list_of_blobs.disconnect()
+        path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+        np.save(path, self.list_of_blobs)
+        return {}
+
+    def load_from_idtrackerai(self, project_path, video_object):
+        self.video_object = video_object
+        path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+        self.list_of_blobs = np.load(path).item()
+        self.list_of_blobs.reconnect()
+        path = os.path.join(project_path, 'preprocessing', 'fragments.npy')
+        self.list_of_framents = np.load(path).item()
 
     def create_tree_nodes(self):
         self.treenode = self.tree.create_child(self.name, icon=conf.ANNOTATOR_ICON_OBJECT, parent=self.video.treenode)
@@ -37,9 +54,9 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     def draw(self, frame, frame_index):
 
-        if self._data is None: return
+        if self.list_of_blobs is None: return
 
-        blobs = self._data.blobs_in_video[frame_index]
+        blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
         for blob in blobs:
 
@@ -95,7 +112,7 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
         frame_index = self.mainwindow.timeline.value
 
         # blobs in the current frame
-        blobs = self._data.blobs_in_video[frame_index]
+        blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
         for blob in blobs:
 
@@ -153,7 +170,7 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     def __jump2next_crossing(self):
         frame_index = self.mainwindow.timeline.value
-        frames = self._data.blobs_in_video
+        frames = self.list_of_blobs.blobs_in_video
 
         for i in range(frame_index+1, len(frames) ):
             for blob in frames[i]:
@@ -163,7 +180,7 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     def __jump2previous_crossing(self):
         frame_index = self.mainwindow.timeline.value
-        frames = self._data.blobs_in_video
+        frames = self.list_of_blobs.blobs_in_video
 
         for i in range(frame_index-1, -1, -1):
             for blob in frames[i]:
@@ -178,6 +195,17 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
         elif evt.key() == QtCore.Qt.Key_Q:
             self.__jump2previous_crossing()
+
+
+    def __close_trajectories_gaps(self):
+        self.list_of_blobs = close_trajectories_gaps(
+            self.video_object,
+            self.list_of_blobs,
+            self.list_of_framents
+        )
+
+
+
 
 
     ######################################################################
@@ -199,13 +227,3 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     @property
     def parent_treenode(self):  return self.video.treenode
-
-    @property
-    def path(self):
-        return self._path
-
-    @path.setter
-    def path(self, value):
-        self._data = np.load(value).item()
-        self._data.reconnect()
-        self._path = value

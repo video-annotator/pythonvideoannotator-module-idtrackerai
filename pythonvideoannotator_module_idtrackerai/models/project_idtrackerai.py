@@ -11,16 +11,7 @@ class IdTrackerProject(object):
 
     def save(self, data={}, project_path=None):
         if self._is_idtrackerai_project:
-
-            d = self._obj._data
-            d.disconnect()
-
-            path = self._obj.path
-            basepath, filename = os.path.basename()
-
-            np.save(self._obj.path, d)
-
-            return {}
+            return self._obj.save(data, project_path)
         else:
             return super().save(data, project_path)
 
@@ -36,17 +27,15 @@ class IdTrackerProject(object):
         vidobj_path = os.path.join(project_path, 'video_object.npy')
 
         if os.path.exists(blobs_path) and os.path.exists(vidobj_path):
-
+            self._directory = project_path
             self._is_idtrackerai_project = True
 
-            v = np.load(vidobj_path).item()
+            videoobj = np.load(vidobj_path).item()
             video = self.create_video()
-            video.filepath = os.path.join(project_path, '..', os.path.basename(v._video_path))
-
-            self._directory = True
+            video.filepath = os.path.join(project_path, '..', os.path.basename(videoobj._video_path))
 
             self._obj = video.create_idtrackerai_object()
-            self._obj.path = blobs_path
+            self._obj.load_from_idtrackerai(project_path, videoobj)
 
             return data
         else:
