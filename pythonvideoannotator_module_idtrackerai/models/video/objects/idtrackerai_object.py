@@ -1,5 +1,6 @@
 from pythonvideoannotator_models.models.video.objects.video_object import VideoObject
 from idtrackerai.postprocessing.assign_them_all import close_trajectories_gaps
+from idtrackerai.utils.py_utils import get_spaced_colors_util
 from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
 from pyforms.controls import ControlText
 from pyforms.controls import ControlButton
@@ -46,6 +47,7 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
         self.list_of_blobs.reconnect()
         path = os.path.join(project_path, 'preprocessing', 'fragments.npy')
         self.list_of_framents = np.load(path).item()
+        self.colors = get_spaced_colors_util(self.video_object.number_of_animals, black = True)
 
     def create_tree_nodes(self):
         self.treenode = self.tree.create_child(self.name, icon=conf.ANNOTATOR_ICON_OBJECT, parent=self.video.treenode)
@@ -67,27 +69,35 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
             for identity, centroid in zip(identities, centroids):
 
                 pos = int(round(centroid[0],0)), int(round(centroid[1],0))
+                color = self.colors[identity] if identity is not None else self.colors[0]
 
                 cv2.polylines(frame, np.array([contour]), True, (0, 255, 0), 1)
 
                 cv2.circle(frame, pos, 8, (255, 255, 255), -1, lineType=cv2.LINE_AA)
-                cv2.circle(frame, pos, 6, (100, 0, 100), -1, lineType=cv2.LINE_AA)
+                cv2.circle(frame, pos, 6, color, -1, lineType=cv2.LINE_AA)
 
                 if self._selected_id==identity:
                     cv2.circle(frame, pos, 10, (0, 0, 255), 2, lineType=cv2.LINE_AA)
 
                 if identity is not None:
 
+                    # if blob.user_generated_identity is not None:
+                    #     idroot = 'u-'
+                    # elif blob.identity_corrected_closing_gaps is not None and blob.is_an_individual:
+                    #     idroot = 'i-'
+                    # elif blob.identity_corrected_closing_gaps is not None:
+                    #     idroot = 'c-'
+                    # elif blob.identity_corrected_solving_jumps is not None:
+                    #     idroot = 'd-'
+                    # elif not blob.used_for_training:
+                    #     idroot = 'a-'
+                    # else:
+                    #     idroot = ''
+
                     if blob.user_generated_identity is not None:
                         idroot = 'u-'
-                    elif blob.identity_corrected_closing_gaps is not None and blob.is_an_individual:
-                        idroot = 'i-'
-                    elif blob.identity_corrected_closing_gaps is not None:
+                    elif blob.identity_corrected_closing_gaps is not None and not blob.is_an_individual:
                         idroot = 'c-'
-                    elif blob.identity_corrected_solving_jumps is not None:
-                        idroot = 'd-'
-                    elif not blob.used_for_training:
-                        idroot = 'a-'
                     else:
                         idroot = ''
 
@@ -97,7 +107,7 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
                     str_pos    = pos[0] - text_width // 2, pos[1] - 12
 
                     cv2.putText(frame, idstr, str_pos, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), thickness=3, lineType=cv2.LINE_AA)
-                    cv2.putText(frame, idstr, str_pos, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (100, 0, 100), thickness=2, lineType=cv2.LINE_AA)
+                    cv2.putText(frame, idstr, str_pos, cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, thickness=2, lineType=cv2.LINE_AA)
                 else:
                     bounding_box = blob.bounding_box_in_frame_coordinates
                     rect_color = blob.rect_color if hasattr(blob, 'rect_color') else (255,0,0)
@@ -132,7 +142,7 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
                     new_blob_identity = self.input_int(
                         'Type in the new identity',
                         title='New identity',
-                        default=identity
+                        default=identity if identity is not None else 0
                     )
 
                     # Update only if the new identity is different from the old one.
@@ -190,10 +200,10 @@ class IdtrackeraiObject(IModelGUI, VideoObject, BaseWidget):
 
     def key_release_event(self, evt):
 
-        if evt.key() == QtCore.Qt.Key_E:
+        if evt.key() == QtCore.Qt.Key_W:
             self.__jump2next_crossing()
 
-        elif evt.key() == QtCore.Qt.Key_Q:
+        elif evt.key() == QtCore.Qt.Key_S:
             self.__jump2previous_crossing()
 
 
