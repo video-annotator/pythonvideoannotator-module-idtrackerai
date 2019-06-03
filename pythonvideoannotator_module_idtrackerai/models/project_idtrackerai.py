@@ -30,7 +30,7 @@ class IdTrackerProject(object):
             self._directory = project_path
             self._is_idtrackerai_project = True
 
-            videoobj = np.load(vidobj_path).item()
+            videoobj = np.load(vidobj_path, allow_pickle=True).item()
             video = self.create_video()
             video.filepath = os.path.join(project_path, '..', os.path.basename(videoobj._video_path))
 

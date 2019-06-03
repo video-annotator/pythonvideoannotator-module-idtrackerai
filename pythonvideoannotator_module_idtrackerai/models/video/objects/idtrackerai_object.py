@@ -21,7 +21,7 @@ class IdtrackeraiObject(DatasetGUI, VideoObject, BaseWidget):
     def __init__(self, video):
 
         self._nametxt = ControlText('Name', default='Untitled')
-        self._closepaths_btn = ControlButton('Close trajectories', default=self.__close_trajectories_gaps)
+        self._closepaths_btn = ControlButton('Interpolate trajectories', default=self.__close_trajectories_gaps)
 
         DatasetGUI.__init__(self)
         VideoObject.__init__(self)
@@ -86,10 +86,10 @@ class IdtrackeraiObject(DatasetGUI, VideoObject, BaseWidget):
     def load_from_idtrackerai(self, project_path, video_object):
         self.video_object = video_object
         path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
-        self.list_of_blobs = np.load(path).item()
+        self.list_of_blobs = np.load(path, allow_pickle=True).item()
         self.list_of_blobs.reconnect()
         path = os.path.join(project_path, 'preprocessing', 'fragments.npy')
-        self.list_of_framents = np.load(path).item()
+        self.list_of_framents = np.load(path, allow_pickle=True).item()
         self.colors = get_spaced_colors_util(self.video_object.number_of_animals, black = True)
 
     def create_tree_nodes(self):
@@ -161,14 +161,19 @@ class IdtrackeraiObject(DatasetGUI, VideoObject, BaseWidget):
             cv2.circle(frame, self._tmp_object_pos, 8, (50,50,50), 2, lineType=cv2.LINE_AA)
 
     def on_drag(self, p1, p2):
-
+        print("on_drag", self._selected_id, p1, p2)
         if self._selected_id and math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)>5:
             self._tmp_object_pos = int(round(p2[0],0)), int(round(p2[1],0))
 
 
     def on_end_drag(self, p1, p2):
+        print(self._tmp_object_pos)
         if self._tmp_object_pos:
+            if hasattr(self._selected_blob, 'interpolated_centroids'):
+                index = self._selected_blob.final_identity.index(self._selected_id)
+                self._selected_blob.interpolated_centroids[index] = p2
             self._selected_blob.centroid = p2
+
 
         self._tmp_object_pos = None
 
@@ -205,6 +210,7 @@ class IdtrackeraiObject(DatasetGUI, VideoObject, BaseWidget):
             self._selected_id  = None
             self._selected_pos = None
             self._selected_blob = None
+        print("on_click", self._selected_id, self._selected_pos, self._selected_blob)
 
 
     def on_double_click(self, event, x, y):

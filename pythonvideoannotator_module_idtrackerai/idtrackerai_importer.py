@@ -17,8 +17,8 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
     blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
     vidobj_path = os.path.join(project_path, 'video_object.npy')
 
-    b = np.load(blobs_path).item()
-    v = np.load(vidobj_path).item()
+    b = np.load(blobs_path, allow_pickle=True).item()
+    v = np.load(vidobj_path, allow_pickle=True).item()
 
     resolution = v._resolution_reduction
 
