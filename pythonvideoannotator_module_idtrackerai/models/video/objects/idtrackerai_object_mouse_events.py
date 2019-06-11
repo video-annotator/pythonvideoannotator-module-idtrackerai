@@ -152,5 +152,6 @@ class IdtrackeraiObjectMouseEvents(object):
 
         if value is None:
             self._del_centroids_btn.hide()
-        else:
+
+        elif hasattr(value.blob, 'interpolated_centroids'):
             self._del_centroids_btn.show()

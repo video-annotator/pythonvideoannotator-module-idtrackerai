@@ -77,9 +77,35 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
         frame_index = self.mainwindow.timeline.value
         blobs = self.list_of_blobs.blobs_in_video[frame_index]
+
         index = blobs.index(self.selected.blob)
         if index>=0:
-            blobs.pop(index)
+            blob = blobs[index]
+            fragment_id = blob._fragment_identifier
+            fragment = None
+
+            centroids = blob.interpolated_centroids
+            centroid_idx = None
+            for idx, c in enumerate(centroids):
+                if c[0]==self.selected.position[0] and c[1]==self.selected.position[1]:
+                    centroid_idx = idx
+                    break
+
+            while len(blob.next)>=1:
+                blob = blob.next[0]
+                blob.interpolated_centroids.pop(centroid_idx)
+                blob.final_identity.pop(centroid_idx)
+            """
+            # search for the fragment
+            for frag in self.list_of_framents.fragments:
+                if frag._identity==fragment_id:
+                    fragment = frag
+                    break
+
+            begin, end = fragment.start_end
+            """
+
+
 
     def __close_trajectories_gaps(self):
         """
