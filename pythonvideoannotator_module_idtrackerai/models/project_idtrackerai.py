@@ -10,10 +10,11 @@ class IdTrackerProject(object):
         self._is_idtrackerai_project = False
 
     def save(self, data={}, project_path=None):
+
         if self._is_idtrackerai_project:
-            return self._obj.save(data, project_path)
-        else:
-            return super().save(data, project_path)
+            self._obj.save(data, project_path)
+
+        return super().save(data, project_path)
 
 
     def load(self, data, project_path=None):
