@@ -39,7 +39,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         self._nametxt = ControlText('Name', default='idtracker object')
         self._closepaths_btn = ControlButton('Interpolate trajectories', default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroids', default=self.__delete_centroids_btn_evt)
-        #self._add_blob_ondblclick = ControlCheckBox('Add blob on double click', default=False)
+        self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
 
         DatasetGUI.__init__(self)
         VideoObject.__init__(self)
@@ -57,7 +57,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
         self.formset = [
             '_nametxt',
-            #'_add_blob_ondblclick',
+            '_add_blobchk',
             '_del_centroids_btn',
             '_closepaths_btn',
             ' '
@@ -83,35 +83,10 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         if self.selected is None:
             return
 
-        frame_index = self.mainwindow.timeline.value
-        blobs = self.list_of_blobs.blobs_in_video[frame_index]
+        self.selected.blob.remove_centroid(
+            self.selected.position
+        )
 
-        index = blobs.index(self.selected.blob)
-        if index>=0:
-            blob = blobs[index]
-            fragment_id = blob._fragment_identifier
-            fragment = None
-
-            centroids = blob.interpolated_centroids
-            centroid_idx = None
-            for idx, c in enumerate(centroids):
-                if c[0]==self.selected.position[0] and c[1]==self.selected.position[1]:
-                    centroid_idx = idx
-                    break
-
-            while len(blob.next)>=1:
-                blob = blob.next[0]
-                blob.interpolated_centroids.pop(centroid_idx)
-                blob.final_identity.pop(centroid_idx)
-            """
-            # search for the fragment
-            for frag in self.list_of_framents.fragments:
-                if frag._identity==fragment_id:
-                    fragment = frag
-                    break
-
-            begin, end = fragment.start_end
-            """
 
 
 
@@ -189,45 +164,12 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
         for blob in blobs:
+            blob.draw( image, colors_lst=self.colors )
 
-            identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
-            centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
-            contour    = blob.contour
-
-            for identity, centroid in zip(identities, centroids):
-
-                pos   = int(round(centroid[0],0)), int(round(centroid[1],0))
-                color = self.colors[identity] if identity is not None else self.colors[0]
-
-                cv2.polylines(frame, np.array([contour]), True, (0, 255, 0), 1)
-
-                cv2.circle(image, pos, 8, (255, 255, 255), -1, lineType=cv2.LINE_AA)
-                cv2.circle(image, pos, 6, color, -1, lineType=cv2.LINE_AA)
-
-                if self.selected and self.selected.identity==identity:
-                    cv2.circle(image, pos, 10, (0, 0, 255), 2, lineType=cv2.LINE_AA)
-
-                if identity is not None:
-
-                    if blob.user_generated_identity is not None:
-                        idroot = 'u-'
-                    elif blob.identity_corrected_closing_gaps is not None and not blob.is_an_individual:
-                        idroot = 'c-'
-                    else:
-                        idroot = ''
-
-                    idstr      = idroot + str(identity)
-                    text_size  = cv2.getTextSize(idstr, cv2.FONT_HERSHEY_SIMPLEX, 1.0, thickness=2)
-                    text_width = text_size[0][0]
-                    str_pos    = pos[0] - text_width // 2, pos[1] - 12
-
-                    cv2.putText(image, idstr, str_pos, cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), thickness=3, lineType=cv2.LINE_AA)
-                    cv2.putText(image, idstr, str_pos, cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, thickness=2, lineType=cv2.LINE_AA)
-                else:
-                    bounding_box = blob.bounding_box_in_frame_coordinates
-                    rect_color = blob.rect_color if hasattr(blob, 'rect_color') else (255,0,0)
-                    cv2.rectangle(image, bounding_box[0], bounding_box[1], rect_color, 2)
-
+        if self.selected:
+            # Draw the selected position
+            p = self.selected.position
+            cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 10, (0, 0, 255), 2, lineType=cv2.LINE_AA)
 
         if self._tmp_object_pos:
             cv2.circle(image, self._tmp_object_pos, 8, (50,50,50), 2, lineType=cv2.LINE_AA)
@@ -288,13 +230,11 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
             for blob in frame_data:
 
-                identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
-                centroids = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
                 fragment = blob.fragment_identifier
                 crossing = blob.is_a_crossing
                 contour = blob.contour
 
-                for identity, centroid in zip(identities, centroids):
+                for identity, centroid in zip(blob.final_identities, blob.final_centroids):
 
                     if identity not in objs:
                         obj = video.create_object()
