@@ -77,7 +77,8 @@ class IdtrackeraiObjectMouseEvents(object):
 
             # Update only if the new identity is different from the old one.
             if new_blob_identity!=identity:
-
+                pass
+                """
                 blob._user_generated_identity = new_blob_identity
 
                 modified_blob = blob
@@ -102,7 +103,7 @@ class IdtrackeraiObjectMouseEvents(object):
                         current.previous[0]._user_generated_identity = new_blob_identity
                         current = current.previous[0]
                         count_past_corrections += 1
-
+                """
         #else:
         # if no object is selected
 
