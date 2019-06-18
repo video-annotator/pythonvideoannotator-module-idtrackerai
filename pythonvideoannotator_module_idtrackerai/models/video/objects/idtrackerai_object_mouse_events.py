@@ -71,7 +71,7 @@ class IdtrackeraiObjectMouseEvents(object):
 
             if not( identity in ['', None]):
                 try:
-                    self.selected.blob.add_centroid( (x,y), identity )
+                    self.selected.blob.add_centroid(self.video_object, (x,y), identity )
                 except Exception as e:
                     self.warning(str(e), 'Error')
 

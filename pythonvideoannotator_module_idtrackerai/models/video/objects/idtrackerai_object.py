@@ -83,6 +83,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
             return
 
         self.selected.blob.remove_centroid(
+            self.video_object,
             self.selected.position
         )
 
