@@ -1,19 +1,18 @@
-import numpy as np, cv2
+import numpy as np, cv2, logging
 
 from AnyQt import QtCore
 from confapp import conf
+from AnyQt.QtGui import QKeySequence
 from pyforms.basewidget import BaseWidget
 from pyforms.controls import ControlText
 from pyforms.controls import ControlButton
 from pyforms.controls import ControlCheckBox
 from .idtrackerai_object_io import IdtrackeraiObjectIO
 from .idtrackerai_object_mouse_events import IdtrackeraiObjectMouseEvents
-from idtrackerai.postprocessing.assign_them_all import close_trajectories_gaps
 from pythonvideoannotator_models.models.video.objects.video_object import VideoObject
 from pythonvideoannotator_models_gui.models.video.objects.object2d.datasets.dataset_gui import DatasetGUI
 
-
-
+logger = logging.getLogger(__name__)
 
 class SelectedBlob(object):
     """
@@ -95,13 +94,42 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         Make the interpolations.
         :return:
         """
-        self.list_of_blobs = close_trajectories_gaps(
-            self.video_object,
-            self.list_of_blobs,
-            self.list_of_framents
-        )
+
+        try:
+
+            start = None
+            end = None
+            identity = None
+
+            if self.video_object.is_centroid_updated:
+
+                if self.selected:
+                    start = self.input_int(
+                        'Initial frame',
+                        title='Select the initial frame for interpolation',
+                        default=0
+                    )
+
+                    if start is None: return
+
+                    end = self.input_int(
+                        'Last frame',
+                        title='Select the last frame for the interpolation',
+                        default=0
+                    )
+
+                    identity = self.selected.identity
+
+                else:
+                    raise Exception('No identity selected.')
 
 
+            self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
+
+
+        except Exception as e:
+            logger.debug(str(e), exc_info=True)
+            self.warning(str(e))
 
     ######################################################################
     ### Key events #######################################################
@@ -109,12 +137,16 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
     def key_release_event(self, evt):
 
+        key = QKeySequence(evt.modifiers() | evt.key()).toString().encode("ascii", "ignore").decode()
+
+        logger.debug(key)
+
         # Jump to the next crossing.
-        if evt.key() == QtCore.Qt.Key_W:
+        if key == conf.SHORT_KEYS['Go to next crossing.']:
             self.__jump2next_crossing()
 
         # Jump to the previous crossing.
-        elif evt.key() == QtCore.Qt.Key_S:
+        elif key == conf.SHORT_KEYS['Go to previous crossing.']:
             self.__jump2previous_crossing()
 
 

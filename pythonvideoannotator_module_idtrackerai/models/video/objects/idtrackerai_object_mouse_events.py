@@ -122,7 +122,7 @@ class IdtrackeraiObjectMouseEvents(object):
 
         if self._tmp_object_pos and self.selected and self.selected.blob:
 
-            self.selected.blob.update_centroid(self.selected.position, p2)
+            self.selected.blob.update_centroid(self.video_object, self.selected.position, p2)
 
         self._tmp_object_pos = None
 
