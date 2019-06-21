@@ -33,8 +33,8 @@ class SelectedBlob(object):
 
 class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, IdtrackeraiObjectIO, BaseWidget):
 
-    RESET_BTN_LABEL = 'Reset manually corrected data'
-    RESET_BTN_LABEL_FOR_ID = 'Reset manually corrected data for {0}'
+    RESET_BTN_LABEL = 'Clear updates'
+    RESET_BTN_LABEL_FOR_ID = 'Clear updates for {0}'
 
     INTERPOLATE_BTN_LABEL = 'Interpolate trajectories'
     INTERPOLATE_BTN_LABEL_FOR_ID = 'Interpolate trajectories for {0}'
@@ -43,7 +43,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
         self._nametxt = ControlText('Name', default='idtracker object')
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
-        self._del_centroids_btn = ControlButton('Delete centroids', default=self.__delete_centroids_btn_evt)
+        self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
         self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
