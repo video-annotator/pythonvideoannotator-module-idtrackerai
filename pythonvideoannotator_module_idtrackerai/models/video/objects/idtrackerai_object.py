@@ -68,6 +68,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
             '_del_centroids_btn',
             '_closepaths_btn',
             '_reset_btn',
+            ' ',
+            '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
             ' '
         ]
 
@@ -155,9 +157,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
             return
 
         try:
-
-            self.selected.blob.remove_centroid(
-                self.video_object,
+            self.list_of_blobs.remove_centroid(
+                self.mainwindow.timeline.value,
+                self.selected.identity,
                 self.selected.position
             )
             self.mainwindow.player.refresh()
@@ -236,9 +238,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
             )
 
         #if self.selected:
-        #    # Draw the selected position
+            # Draw the selected position
         #    p = self.selected.position
-        #    cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 10, (0, 0, 255), 2, lineType=cv2.LINE_AA)
+        #    cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 14, (255, 255, 0), 2, lineType=cv2.LINE_AA)
 
         if self._tmp_object_pos:
             cv2.circle(image, self._tmp_object_pos, 8, (50,50,50), 2, lineType=cv2.LINE_AA)
