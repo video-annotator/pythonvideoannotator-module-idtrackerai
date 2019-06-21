@@ -383,3 +383,5 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
             if len(value.blob.final_centroids) > 1:
                 self._del_centroids_btn.show()
+            else:
+                self._del_centroids_btn.hide()
