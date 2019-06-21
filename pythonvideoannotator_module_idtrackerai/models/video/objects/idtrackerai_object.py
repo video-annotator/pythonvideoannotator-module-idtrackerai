@@ -33,12 +33,20 @@ class SelectedBlob(object):
 
 class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, IdtrackeraiObjectIO, BaseWidget):
 
+    RESET_BTN_LABEL = 'Reset manually corrected data'
+    RESET_BTN_LABEL_FOR_ID = 'Reset manually corrected data for {0}'
+
+    INTERPOLATE_BTN_LABEL = 'Interpolate trajectories'
+    INTERPOLATE_BTN_LABEL_FOR_ID = 'Interpolate trajectories for {0}'
+
     def __init__(self, video):
 
         self._nametxt = ControlText('Name', default='idtracker object')
-        self._closepaths_btn = ControlButton('Interpolate trajectories', default=self.__close_trajectories_gaps)
+        self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroids', default=self.__delete_centroids_btn_evt)
         self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
+
+        self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
 
         DatasetGUI.__init__(self)
         VideoObject.__init__(self)
@@ -59,6 +67,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
             '_add_blobchk',
             '_del_centroids_btn',
             '_closepaths_btn',
+            '_reset_btn',
             ' '
         ]
 
@@ -76,18 +85,31 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
     ### Events events ####################################################
     ######################################################################
 
+    def __reset_manually_corrected_data(self):
 
 
-    def __delete_centroids_btn_evt(self):
-        if self.selected is None:
-            return
+        try:
+            start = self.input_int(
+                'Initial frame', title='Select the initial frame for the reset', default=0)
 
-        self.selected.blob.remove_centroid(
-            self.video_object,
-            self.selected.position
-        )
+            if start is None:
+                return
 
+            end = self.input_int(
+                'Last frame', title='Select the last frame for the reset', default=self.video_object.number_of_frames)
 
+            if end is None:
+                return
+
+            identity = self.selected.identity if self.selected else None
+
+            self.list_of_blobs.reset_user_generated_identities_and_centroids(start, end, identity)
+
+            self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
+
+        except Exception as e:
+            logger.debug(str(e), exc_info=True)
+            self.warning(str(e))
 
 
     def __close_trajectories_gaps(self):
@@ -95,35 +117,30 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         Make the interpolations.
         :return:
         """
-
         try:
-
             start = None
-            end = None
+            end   = None
             identity = None
 
             if self.video_object.is_centroid_updated:
 
                 if self.selected:
-                    start = self.input_int(
-                        'Initial frame',
-                        title='Select the initial frame for interpolation',
-                        default=0
-                    )
+                    start = self.input_int('Initial frame', title='Select the initial frame for interpolation', default=0)
 
                     if start is None: return
 
                     end = self.input_int(
-                        'Last frame',
-                        title='Select the last frame for the interpolation',
-                        default=0
+                        'Last frame', title='Select the last frame for the interpolation',
+                        default=self.video_object.number_of_frames
                     )
+
+                    if end is None:
+                        return
 
                     identity = self.selected.identity
 
                 else:
                     raise Exception('No identity selected.')
-
 
             self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
 
@@ -131,6 +148,25 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         except Exception as e:
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
+
+
+    def __delete_centroids_btn_evt(self):
+        if self.selected is None:
+            return
+
+        try:
+
+            self.selected.blob.remove_centroid(
+                self.video_object,
+                self.selected.position
+            )
+            self.mainwindow.player.refresh()
+
+        except Exception as e:
+            logger.debug(str(e), exc_info=True)
+            self.warning(str(e))
+
+
 
     ######################################################################
     ### Key events #######################################################
@@ -156,29 +192,24 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         Jump to previous crossing.
         :return:
         """
-        frame_index = self.mainwindow.timeline.value
-        frames = self.list_of_blobs.blobs_in_video
+        curr_frame = self.mainwindow.timeline.value
+        next_frame = self.list_of_blobs.next_frame_to_validate(curr_frame if curr_frame else 1, 'past')
+        #logger.debug('previous frame: {0}'.format(next_frame))
 
-        for i in range(frame_index-1, -1, -1):
-            for blob in frames[i]:
-                if blob.is_a_crossing:
-                    self.mainwindow.timeline.value = blob.frame_number
-                    return
+        if next_frame is not None:
+            self.mainwindow.timeline.value = next_frame
 
     def __jump2next_crossing(self):
         """
         Jump to the next crossing
         :return:
         """
-        frame_index = self.mainwindow.timeline.value
-        frames = self.list_of_blobs.blobs_in_video
+        curr_frame = self.mainwindow.timeline.value
+        next_frame = self.list_of_blobs.next_frame_to_validate(curr_frame if curr_frame else 1, 'future')
+        #logger.debug('next frame: {0}'.format(next_frame))
 
-        for i in range(frame_index+1, len(frames) ):
-            for blob in frames[i]:
-                if blob.is_a_crossing:
-                    self.mainwindow.timeline.value = blob.frame_number
-                    return
-
+        if next_frame is not None:
+            self.mainwindow.timeline.value = next_frame
 
     ######################################################################
     ### PROPERTIES #######################################################
@@ -197,12 +228,17 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
         for blob in blobs:
-            blob.draw( image, colors_lst=self.colors )
 
-        if self.selected:
-            # Draw the selected position
-            p = self.selected.position
-            cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 10, (0, 0, 255), 2, lineType=cv2.LINE_AA)
+            blob.draw(
+                image,
+                colors_lst=self.colors,
+                selected_id=self.selected.identity if self.selected else None
+            )
+
+        #if self.selected:
+        #    # Draw the selected position
+        #    p = self.selected.position
+        #    cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 10, (0, 0, 255), 2, lineType=cv2.LINE_AA)
 
         if self._tmp_object_pos:
             cv2.circle(image, self._tmp_object_pos, 8, (50,50,50), 2, lineType=cv2.LINE_AA)
@@ -316,3 +352,32 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
         # update the progress
         #if progress_event is not None:
         #    progress_event(len(b.blobs_in_video), max_count=total_blobs)
+
+    ######################################################################
+    ### PROPERTIES #######################################################
+    ######################################################################
+
+    @property
+    def selected(self):
+        """
+        Return and set the selected blob
+        :return SelectedBlob: Return the selected blob.
+        """
+        return self._selected
+
+    @selected.setter
+    def selected(self, value):
+        self._selected = value
+
+        if value is None:
+            self._del_centroids_btn.hide()
+            self._add_blobchk.hide()
+            self._reset_btn.label = self.RESET_BTN_LABEL
+            self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL
+        else:
+            self._add_blobchk.show()
+            self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(self.selected.identity)
+            self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(self.selected.identity)
+
+            if len(value.blob.final_centroids) > 1:
+                self._del_centroids_btn.show()

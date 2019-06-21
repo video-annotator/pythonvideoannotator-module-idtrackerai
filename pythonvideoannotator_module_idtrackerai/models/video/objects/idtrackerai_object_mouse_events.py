@@ -101,11 +101,6 @@ class IdtrackeraiObjectMouseEvents(object):
                 blob.update_identity(new_blob_identity, identity)
 
 
-
-
-
-
-
     def on_drag(self, p1, p2):
 
         if self.selected and \
@@ -115,43 +110,11 @@ class IdtrackeraiObjectMouseEvents(object):
             self._tmp_object_pos = int(round(p2[0],0)), int(round(p2[1],0))
 
 
-
-
-
     def on_end_drag(self, p1, p2):
 
         if self._tmp_object_pos and self.selected and self.selected.blob:
 
             self.selected.blob.update_centroid(self.video_object, self.selected.position, p2)
+            self.selected.position = p2
 
         self._tmp_object_pos = None
-
-
-
-
-
-    ######################################################################
-    ### PROPERTIES #######################################################
-    ######################################################################
-
-    @property
-    def selected(self):
-        """
-        Return and set the selected blob
-        :return SelectedBlob: Return the selected blob.
-        """
-        return self._selected
-
-    @selected.setter
-    def selected(self, value):
-        self._selected = value
-
-        if value is None:
-            self._del_centroids_btn.hide()
-            self._add_blobchk.hide()
-        else:
-            self._add_blobchk.show()
-
-            if len(value.blob.final_centroids)>1:
-                self._del_centroids_btn.show()
-
