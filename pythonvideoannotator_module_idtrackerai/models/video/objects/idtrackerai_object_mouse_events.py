@@ -97,8 +97,11 @@ class IdtrackeraiObjectMouseEvents(object):
 
             # Update only if the new identity is different from the old one.
             if new_blob_identity!=identity:
-
-                blob.update_identity(new_blob_identity, identity)
+                try:
+                    blob.update_identity(new_blob_identity, identity)
+                    blob.propagate_identity(new_blob_identity, identity)
+                except Exception as e:
+                    self.warning(str(e), 'Error')
 
 
     def on_drag(self, p1, p2):

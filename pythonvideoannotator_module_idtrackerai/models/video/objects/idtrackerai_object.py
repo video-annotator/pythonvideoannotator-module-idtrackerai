@@ -157,10 +157,11 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
             return
 
         try:
-            self.list_of_blobs.remove_centroid(
-                self.mainwindow.timeline.value,
+            self.selected.blob.remove_centroid(
+                self.video_object,
                 self.selected.identity,
-                self.selected.position
+                self.selected.position,
+                self.list_of_blobs.blobs_in_video[self.mainwindow.timeline.value],
             )
             self.mainwindow.player.refresh()
 
