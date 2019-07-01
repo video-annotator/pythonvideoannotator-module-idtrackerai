@@ -8,19 +8,25 @@ from idtrackerai.postprocessing.identify_non_assigned_with_interpolation import 
 
 class IdtrackeraiObjectIO(object):
 
+    FACTORY_FUNCTION = 'create_idtrackerai_object'
 
-    def save(self, data={}, project_path=None):
+
+    def save(self, data={}, obj_path=None):
+
+        idtrackerai_prj_path = os.path.relpath(self.idtrackerai_prj_path, obj_path)
+        data['idtrackerai-project-path'] = idtrackerai_prj_path
 
         self.list_of_blobs.disconnect()
         self.list_of_blobs_no_gaps = copy.deepcopy(self.list_of_blobs)
 
-        path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+        path = os.path.join(obj_path, idtrackerai_prj_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
         np.save(path, self.list_of_blobs)
 
         timestamp_str = datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H%M%S')
 
         trajectories_wo_gaps_file = os.path.join(
-            project_path,
+            obj_path,
+            idtrackerai_prj_path,
             'trajectories_wo_gaps',
             'trajectories_wo_gaps_{}.npy'.format(timestamp_str)
         )
@@ -37,6 +43,7 @@ class IdtrackeraiObjectIO(object):
         )
 
         trajectories_file = os.path.join(
+            obj_path,
             self.video_object.trajectories_folder,
             'trajectories_{}.npy'.format(timestamp_str)
         )
@@ -47,11 +54,26 @@ class IdtrackeraiObjectIO(object):
         np.save(trajectories_file, trajectories)
         self.video_object.save()
 
-        return {}
+        return super().save(data, obj_path)
+
+
+
+    def load(self, data, obj_path):
+        idtrackerai_prj_path = os.path.join(obj_path, data['idtrackerai-project-path'])
+
+        videoobj = np.load(os.path.join(idtrackerai_prj_path, 'video_object.npy'), allow_pickle=True).item()
+
+        self.load_from_idtrackerai(
+            idtrackerai_prj_path,
+            videoobj
+        )
+
 
 
 
     def load_from_idtrackerai(self, project_path, video_object):
+
+        self.idtrackerai_prj_path = project_path
 
         self.video_object = video_object
         path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')

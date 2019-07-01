@@ -9,13 +9,14 @@ class IdTrackerProject(object):
         # this flag indicates if the proje
         self._is_idtrackerai_project = False
 
+    """
     def save(self, data={}, project_path=None):
 
         if self._is_idtrackerai_project:
             self._obj.save(data, project_path)
 
         return super().save(data, project_path)
-
+    """
 
     def load(self, data, project_path=None):
         """
@@ -24,24 +25,30 @@ class IdTrackerProject(object):
         :param project_path:
         :return:
         """
-        blobs_path  = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
-        vidobj_path = os.path.join(project_path, 'video_object.npy')
 
-        if os.path.exists(blobs_path) and os.path.exists(vidobj_path):
-            self._directory = project_path
-            self._is_idtrackerai_project = True
-
-            videoobj = np.load(vidobj_path, allow_pickle=True).item()
-            video = self.create_video()
-            video.filepath = os.path.join(project_path, '..', os.path.basename(videoobj._video_path))
-
-            self._obj = video.create_idtrackerai_object()
-            self._obj.load_from_idtrackerai(project_path, videoobj)
-
-            return data
-        else:
+        # Only if a video annotator project exists in the project
+        if os.path.exists(os.path.join(project_path, 'project.json')):
             return super().load(data, project_path)
+        else:
 
+            # Load an idtracker project
+            blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+            vidobj_path = os.path.join(project_path, 'video_object.npy')
+
+            if os.path.exists(blobs_path) and os.path.exists(vidobj_path):
+                self._directory = project_path
+                self._is_idtrackerai_project = True
+
+                videoobj = np.load(vidobj_path, allow_pickle=True).item()
+                video = self.create_video()
+                video.filepath = os.path.join(project_path, '..', os.path.basename(videoobj._video_path))
+
+                self._obj = video.create_idtrackerai_object()
+                self._obj.load_from_idtrackerai(project_path, videoobj)
+
+                # expand and select the tree nodes
+                video.treenode.setExpanded(True)
+                self._obj.treenode.setSelected(True)
 
 
     def __update_progress_evt(self, progress_count, max_count=None):

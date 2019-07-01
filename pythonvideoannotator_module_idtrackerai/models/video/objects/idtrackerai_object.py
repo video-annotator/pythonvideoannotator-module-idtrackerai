@@ -11,6 +11,7 @@ from .idtrackerai_object_io import IdtrackeraiObjectIO
 from .idtrackerai_object_mouse_events import IdtrackeraiObjectMouseEvents
 from pythonvideoannotator_models.models.video.objects.video_object import VideoObject
 from pythonvideoannotator_models_gui.models.video.objects.object2d.datasets.dataset_gui import DatasetGUI
+from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class SelectedBlob(object):
 
 
 
-class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, IdtrackeraiObjectIO, BaseWidget):
+class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, IdtrackeraiObjectIO, VideoObject, BaseWidget):
 
     RESET_BTN_LABEL = 'Clear updates'
     RESET_BTN_LABEL_FOR_ID = 'Clear updates for {0}'
@@ -41,7 +42,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
     def __init__(self, video):
 
-        self._nametxt = ControlText('Name', default='idtracker object')
+        self._name = ControlText('Name', default='idtracker object')
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
         self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
@@ -63,7 +64,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
 
         self.formset = [
-            '_nametxt',
+            '_name',
             '_add_blobchk',
             '_del_centroids_btn',
             '_closepaths_btn',
@@ -109,6 +110,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
 
             self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
 
+            self.mainwindow.player.refresh()
+
         except Exception as e:
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
@@ -145,6 +148,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
                     raise Exception('No identity selected.')
 
             self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
+
+            self.mainwindow.player.refresh()
+
 
 
         except Exception as e:
@@ -253,9 +259,6 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, VideoObject, I
     ### PROPERTIES #######################################################
     ######################################################################
 
-    @property
-    def name(self):
-        return self._nametxt.value
 
     @property
     def mainwindow(self): return self.video.mainwindow
