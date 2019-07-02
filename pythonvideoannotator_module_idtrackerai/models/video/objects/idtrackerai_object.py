@@ -10,8 +10,9 @@ from pyforms.controls import ControlCheckBox
 from .idtrackerai_object_io import IdtrackeraiObjectIO
 from .idtrackerai_object_mouse_events import IdtrackeraiObjectMouseEvents
 from pythonvideoannotator_models.models.video.objects.video_object import VideoObject
-from pythonvideoannotator_models_gui.models.video.objects.object2d.datasets.dataset_gui import DatasetGUI
 from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
+
+from pythonvideoannotator_module_idtrackerai import settings
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class SelectedBlob(object):
 
 
 
-class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, IdtrackeraiObjectIO, VideoObject, BaseWidget):
+class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObjectIO, VideoObject, BaseWidget):
 
     RESET_BTN_LABEL = 'Clear updates'
     RESET_BTN_LABEL_FOR_ID = 'Clear updates for {0}'
@@ -41,18 +42,18 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, Idt
     INTERPOLATE_BTN_LABEL_FOR_ID = 'Interpolate trajectories for {0}'
 
     def __init__(self, video):
-
-        self._name = ControlText('Name', default='idtracker object')
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
         self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
 
-        DatasetGUI.__init__(self)
-        VideoObject.__init__(self)
+        IModelGUI.__init__(self)
+        VideoObject.__init__(self, video=video)
         IdtrackeraiObjectMouseEvents.__init__(self)
-        BaseWidget.__init__(self, 'IdtrackerAi Object', parent_win=video)
+        BaseWidget.__init__(self, 'Idtrackerai Object', parent_win=video)
+
+        self.name = video.generate_child_name('Idtrackerai object')
 
         self._video = video
         self._video += self
@@ -75,7 +76,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, Idt
         ]
 
     def create_tree_nodes(self):
-        self.treenode = self.tree.create_child(self.name, icon=conf.ANNOTATOR_ICON_OBJECT, parent=self.video.treenode)
+        self.treenode = self.tree.create_child(self.name, icon=settings.ANNOTATOR_ICON_IDTRACKERAI, parent=self.video.treenode)
         self.treenode.win = self
 
         self.tree.add_popup_menu_option(
@@ -84,9 +85,101 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, Idt
             item=self.treenode, icon=conf.ANNOTATOR_ICON_CONTOUR
         )
 
+        self.tree.add_popup_menu_option('-', item=self.treenode)
+        self.tree.add_popup_menu_option(
+            label='Remove',
+            function_action=self.__remove_object,
+            item=self.treenode, icon=conf.ANNOTATOR_ICON_DELETE
+        )
+
     ######################################################################
-    ### Events events ####################################################
+    ### Events ###########################################################
     ######################################################################
+
+    def __remove_object(self):
+        item = self.tree.selected_item
+        if item is not None: self.video -= item.win
+
+    def __convert_to_contours(self):
+
+        resolution = self.video_object._resolution_reduction
+        video = self.video
+
+        objs = {}
+        paths = {}
+        crossings = {}
+        fragments = {}
+        modifications = {}
+        idswitchs = {}
+
+        total_blobs = len(self.list_of_blobs.blobs_in_video)
+
+        # update the progress
+        self.mainwindow.progress_bar.min = 0
+        self.mainwindow.progress_bar.max = total_blobs
+        self.mainwindow.progress_bar.show()
+
+        for frame_index, frame_data in enumerate(self.list_of_blobs.blobs_in_video):
+
+            # update the progress
+            self.mainwindow.progress_bar.value = frame_index
+
+            for blob in frame_data:
+
+                fragment = blob.fragment_identifier
+                crossing = blob.is_a_crossing
+                contour = blob.contour
+
+                for identity, centroid in zip(blob.final_identities, blob.final_centroids):
+
+                    if identity not in objs:
+                        obj = video.create_object()
+                        obj.name = str(identity)
+                        objs[identity] = obj
+
+                        path = obj.create_path()
+                        path.show_object_name = True
+                        path.name = 'path'
+                        paths[identity] = path
+
+                        cnt = obj.create_contours()
+                        cnt.name = 'contours'
+
+                        c = obj.create_value()
+                        c.name = 'crossings'
+                        crossings[identity] = c
+
+                        f = obj.create_value()
+                        f.name = 'path fragments'
+                        fragments[identity] = f
+
+                        m = obj.create_value()
+                        m.name = 'modifications'
+                        modifications[identity] = m
+
+                        i = obj.create_value()
+                        i.name = 'switch identities'
+                        idswitchs[identity] = i
+
+                        obj.idtrackerai_path = path
+                        path.contours = cnt
+                        path.crossings = c
+                        path.fragments = f
+                        path.modifications = m
+                        path.switch_identity = i
+
+                    centroid = (int(round(centroid[0] / resolution)),
+                                int(round(centroid[1] / resolution))) if centroid is not None else None
+
+                    paths[identity].contours.set_contour(frame_index, np.int32(np.rint(contour / resolution)))
+                    paths[identity][frame_index] = centroid
+                    crossings[identity][frame_index] = 1 if crossing else 0
+                    fragments[identity][frame_index] = fragment
+
+        # update the progress
+        self.mainwindow.progress_bar.value = total_blobs
+        self.mainwindow.progress_bar.hide()
+
 
     def __reset_manually_corrected_data(self):
 
@@ -107,8 +200,6 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, Idt
             identity = self.selected.identity if self.selected else None
 
             self.list_of_blobs.reset_user_generated_identities_and_centroids(start, end, identity)
-
-            self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
 
             self.mainwindow.player.refresh()
 
@@ -272,96 +363,6 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, DatasetGUI, IModelGUI, Idt
     @property
     def parent_treenode(self):  return self.video.treenode
 
-
-
-
-
-
-
-
-    def __convert_to_contours(self):
-
-        resolution = self.video_object._resolution_reduction
-        video = self.video
-
-        objs = {}
-        paths = {}
-        crossings = {}
-        fragments = {}
-        modifications = {}
-        idswitchs = {}
-
-        total_blobs = len(self.list_of_blobs.blobs_in_video)
-
-        # update the progress
-        #if progress_event is not None:
-        #    progress_event(0, max_count=total_blobs)
-
-        for frame_index, frame_data in enumerate(self.list_of_blobs.blobs_in_video):
-
-            # update the progress
-            #if progress_event is not None:
-            #    progress_event(frame_index, max_count=total_blobs)
-
-            for blob in frame_data:
-
-                fragment = blob.fragment_identifier
-                crossing = blob.is_a_crossing
-                contour = blob.contour
-
-                for identity, centroid in zip(blob.final_identities, blob.final_centroids):
-
-                    if identity not in objs:
-                        obj = video.create_object()
-                        obj.name = str(identity)
-                        objs[identity] = obj
-
-                        path = obj.create_path()
-                        path.show_object_name = True
-                        path.name = 'path'
-                        paths[identity] = path
-
-                        cnt = obj.create_contours()
-                        cnt.name = 'contours'
-
-                        c = obj.create_value()
-                        c.name = 'crossings'
-                        crossings[identity] = c
-
-                        f = obj.create_value()
-                        f.name = 'path fragments'
-                        fragments[identity] = f
-
-                        m = obj.create_value()
-                        m.name = 'modifications'
-                        modifications[identity] = m
-
-                        i = obj.create_value()
-                        i.name = 'switch identities'
-                        idswitchs[identity] = i
-
-                        obj.idtrackerai_path = path
-                        path.contours = cnt
-                        path.crossings = c
-                        path.fragments = f
-                        path.modifications = m
-                        path.switch_identity = i
-
-                    centroid = (int(round(centroid[0] / resolution)),
-                                int(round(centroid[1] / resolution))) if centroid is not None else None
-
-                    paths[identity].contours.set_contour(frame_index, np.int32(np.rint(contour / resolution)))
-                    paths[identity][frame_index] = centroid
-                    crossings[identity][frame_index] = 1 if crossing else 0
-                    fragments[identity][frame_index] = fragment
-
-        # update the progress
-        #if progress_event is not None:
-        #    progress_event(len(b.blobs_in_video), max_count=total_blobs)
-
-    ######################################################################
-    ### PROPERTIES #######################################################
-    ######################################################################
 
     @property
     def selected(self):

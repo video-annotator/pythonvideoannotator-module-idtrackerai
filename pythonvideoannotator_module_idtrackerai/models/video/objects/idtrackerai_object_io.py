@@ -1,10 +1,11 @@
-import time, copy, numpy as np, os
+import time, copy, numpy as np, os, logging
 
 from datetime import datetime
 from idtrackerai.utils.py_utils import get_spaced_colors_util
 from idtrackerai.postprocessing.get_trajectories import produce_output_dict
 from idtrackerai.postprocessing.identify_non_assigned_with_interpolation import assign_zeros_with_interpolation_identities
 
+logger = logging.getLogger(__name__)
 
 class IdtrackeraiObjectIO(object):
 
@@ -71,7 +72,11 @@ class IdtrackeraiObjectIO(object):
 
 
 
-    def load_from_idtrackerai(self, project_path, video_object):
+    def load_from_idtrackerai(self, project_path, video_object=None):
+
+        if video_object is None:
+            vidobj_path = os.path.join(project_path, 'video_object.npy')
+            video_object = np.load(vidobj_path, allow_pickle=True).item()
 
         self.idtrackerai_prj_path = project_path
 
