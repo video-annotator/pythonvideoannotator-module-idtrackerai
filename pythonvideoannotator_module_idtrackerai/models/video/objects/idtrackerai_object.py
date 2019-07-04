@@ -35,11 +35,11 @@ class SelectedBlob(object):
 
 class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObjectIO, VideoObject, BaseWidget):
 
-    RESET_BTN_LABEL = 'Clear updates'
-    RESET_BTN_LABEL_FOR_ID = 'Clear updates for {0}'
+    RESET_BTN_LABEL = 'Clear user updates for all identities'
+    RESET_BTN_LABEL_FOR_ID = 'Clear user updates for {0}'
 
-    INTERPOLATE_BTN_LABEL = 'Interpolate trajectories'
-    INTERPOLATE_BTN_LABEL_FOR_ID = 'Interpolate trajectories for {0}'
+    INTERPOLATE_BTN_LABEL = 'Global interpolation'
+    INTERPOLATE_BTN_LABEL_FOR_ID = 'Local interpolation for {0}'
 
     def __init__(self, video):
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
@@ -236,7 +236,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
                     identity = self.selected.identity
 
                 else:
-                    raise Exception('No identity selected.')
+                    raise Exception('Global interpolation is only possible if no centroids have been modified. Select an identity to perform a local interpolation')
 
             self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
 
