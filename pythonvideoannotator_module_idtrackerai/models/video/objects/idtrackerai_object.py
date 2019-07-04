@@ -199,7 +199,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
             identity = self.selected.identity if self.selected else None
 
-            self.list_of_blobs.reset_user_generated_identities_and_centroids(start, end, identity)
+            self.list_of_blobs.reset_user_generated_identities_and_centroids(self.video_object, start, end, identity)
 
             self.mainwindow.player.refresh()
 
