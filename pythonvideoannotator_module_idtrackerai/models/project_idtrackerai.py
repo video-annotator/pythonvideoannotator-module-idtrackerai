@@ -21,6 +21,7 @@ class IdTrackerProject(object):
 
                 if len(self.videos[0].objects)==1:
                     self.videos[0].objects[0].treenode.setSelected(True)
+                    self.mainwindow.player.video_index = self.videos[0].objects[0].get_first_frame()
 
                 self.mainwindow.player.call_next_frame()
 
@@ -45,4 +46,5 @@ class IdTrackerProject(object):
                 video.treenode.setExpanded(True)
                 obj.treenode.setSelected(True)
 
+                self.mainwindow.player.video_index = obj.get_first_frame()
                 self.mainwindow.player.call_next_frame()

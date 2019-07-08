@@ -45,6 +45,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
         self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
+        self._first_gfrag = ControlButton('Go to first global fragment', default=self.__go_to_first_global_fragment)
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
 
@@ -70,6 +71,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             '_del_centroids_btn',
             '_closepaths_btn',
             '_reset_btn',
+            '_first_gfrag',
             ' ',
             '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
             ' '
@@ -92,9 +94,16 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             item=self.treenode, icon=conf.ANNOTATOR_ICON_DELETE
         )
 
+    def get_first_frame(self):
+        return self.video_object.get_first_frame(self.list_of_blobs)
+
     ######################################################################
     ### Events ###########################################################
     ######################################################################
+
+    def __go_to_first_global_fragment(self):
+        self.mainwindow.player.video_index = self.get_first_frame()
+        self.mainwindow.player.call_next_frame()
 
     def __remove_object(self):
         item = self.tree.selected_item
