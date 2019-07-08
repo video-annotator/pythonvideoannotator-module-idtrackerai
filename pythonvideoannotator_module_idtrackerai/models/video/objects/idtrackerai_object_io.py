@@ -82,6 +82,9 @@ class IdtrackeraiObjectIO(object):
 
         self.video_object = video_object
         path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+        if not os.path.exists(path):
+            path = os.path.join(project_path, 'preprocessing', 'blobs_collection.npy')
+
         self.list_of_blobs = np.load(path, allow_pickle=True).item()
         self.list_of_blobs.reconnect()
         path = os.path.join(project_path, 'preprocessing', 'fragments.npy')

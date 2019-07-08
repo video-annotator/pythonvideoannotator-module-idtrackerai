@@ -13,8 +13,18 @@ class IdTrackerProject(object):
 
         # Only if a video annotator project exists in the project
         if os.path.exists(os.path.join(project_path, 'project.json')):
-            return super().load(data, project_path)
+            res = super().load(data, project_path)
 
+            if len(self.videos)==1:
+                # expand and select the tree nodes
+                self.videos[0].treenode.setExpanded(True)
+
+                if len(self.videos[0].objects)==1:
+                    self.videos[0].objects[0].treenode.setSelected(True)
+
+                self.mainwindow.player.call_next_frame()
+
+            return res
         else:
             # Load an idtracker project
 
