@@ -30,6 +30,8 @@ class IdTrackerProject(object):
             # Load an idtracker project
 
             blobs_path  = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+            if not os.path.exists(blobs_path):
+                blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection.npy')
             vidobj_path = os.path.join(project_path, 'video_object.npy')
 
             if os.path.exists(blobs_path) and os.path.exists(vidobj_path):

@@ -26,7 +26,7 @@ def run():
 
     print("SEARCHING FOR IDTRACKERAI PROJECTS INSIDE THE DIRECTORY:", args.path)
 
-    for blobs_path in glob.glob( os.path.join(args.path,'**', 'preprocessing', 'blobs_collection_no_gaps.npy'), recursive=True):
+    for blobs_path in glob.glob( os.path.join(args.path, '**', 'preprocessing', 'blobs_collection*.npy'), recursive=True):
 
         path = os.path.dirname(os.path.dirname(blobs_path))
 

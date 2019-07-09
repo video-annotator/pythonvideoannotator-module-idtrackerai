@@ -15,6 +15,8 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
     """
 
     blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+    if not os.path.exists(blobs_path):
+        blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection.npy')
     vidobj_path = os.path.join(project_path, 'video_object.npy')
 
     b = np.load(blobs_path, allow_pickle=True).item()
