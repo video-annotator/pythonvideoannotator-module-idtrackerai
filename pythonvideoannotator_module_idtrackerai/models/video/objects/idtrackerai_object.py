@@ -137,9 +137,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
                 fragment = blob.fragment_identifier
                 crossing = blob.is_a_crossing
-                contour = blob.contour
+                contour = blob.contour_full_resolution
 
-                for identity, centroid in zip(blob.final_identities, blob.final_centroids):
+                for identity, centroid in zip(blob.final_identities, blob.final_centroids_full_resolution):
 
                     if identity not in objs:
                         obj = video.create_object()
@@ -395,7 +395,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(self.selected.identity)
             self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(self.selected.identity)
 
-            if len(value.blob.final_centroids) > 1:
+            if len(value.blob.final_centroids_full_resolution) > 1:
                 self._del_centroids_btn.show()
             else:
                 self._del_centroids_btn.hide()

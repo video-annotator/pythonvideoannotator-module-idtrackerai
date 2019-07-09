@@ -46,7 +46,7 @@ class IdtrackeraiObjectMouseEvents(object):
 
             for blob in blobs:
 
-                for identity, p1 in zip(blob.final_identities, blob.final_centroids):
+                for identity, p1 in zip(blob.final_identities, blob.final_centroids_full_resolution):
 
                     # check if which blob was selected
                     if math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)<10:

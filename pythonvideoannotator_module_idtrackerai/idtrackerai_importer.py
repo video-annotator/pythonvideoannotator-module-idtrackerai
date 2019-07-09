@@ -49,11 +49,13 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
 
         for blob in frame_data:
 
-            identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
-            centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
+            # identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
+            # centroids  = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
+            identities = blob.final_identities
+            centroids  = blob.final_centroids_full_resolution
             fragment   = blob.fragment_identifier
             crossing   = blob.is_a_crossing
-            contour    = blob.contour
+            contour    = blob.contour_full_resolution
 
             for identity, centroid in zip(identities, centroids):
 
