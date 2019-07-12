@@ -7,3 +7,4 @@ logger.setLevel(conf.APP_LOG_HANDLER_LEVEL)
 from .settings import IDTRACKERAI_SHORT_KEYS
 
 conf.SHORT_KEYS.update(IDTRACKERAI_SHORT_KEYS)
+__version__ = "0.0.40"
