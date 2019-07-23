@@ -87,7 +87,7 @@ class IdtrackeraiObjectMouseEvents(object):
 
             identity = self.selected.identity
             blob     = self.selected.blob
-            centroid = self.position
+            centroid = self.selected.position
 
             # ask the new blob identity
             new_blob_identity = self.input_int(
@@ -99,8 +99,8 @@ class IdtrackeraiObjectMouseEvents(object):
             # Update only if the new identity is different from the old one.
             if new_blob_identity!=identity:
                 try:
-                    blob.update_identity(new_blob_identity, identity, centroid)
-                    blob.propagate_identity(new_blob_identity, identity, centroid)
+                    blob.update_identity(new_blob_identity, centroid)
+                    blob.propagate_identity(new_blob_identity, centroid)
                 except Exception as e:
                     self.warning(str(e), 'Error')
 
