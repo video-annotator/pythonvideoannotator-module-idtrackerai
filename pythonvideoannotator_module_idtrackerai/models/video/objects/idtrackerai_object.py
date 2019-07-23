@@ -67,11 +67,11 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
         self.formset = [
             '_name',
+            '_first_gfrag',
             '_add_blobchk',
             '_del_centroids_btn',
-            '_closepaths_btn',
             '_reset_btn',
-            '_first_gfrag',
+            '_closepaths_btn',
             ' ',
             '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
             ' '
