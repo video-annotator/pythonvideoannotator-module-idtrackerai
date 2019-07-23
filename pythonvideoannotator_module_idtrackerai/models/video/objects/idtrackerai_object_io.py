@@ -18,7 +18,6 @@ class IdtrackeraiObjectIO(object):
         data['idtrackerai-project-path'] = idtrackerai_prj_path
 
         self.list_of_blobs.disconnect()
-        self.list_of_blobs_no_gaps = copy.deepcopy(self.list_of_blobs)
 
         path = os.path.join(obj_path, idtrackerai_prj_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
         np.save(path, self.list_of_blobs)
@@ -33,15 +32,10 @@ class IdtrackeraiObjectIO(object):
         )
 
         trajectories_wo_gaps = produce_output_dict(
-            self.list_of_blobs_no_gaps.blobs_in_video,
+            self.list_of_blobs.blobs_in_video,
             self.video_object
         )
         np.save(trajectories_wo_gaps_file, trajectories_wo_gaps)
-
-        self.list_of_blobs = assign_zeros_with_interpolation_identities(
-            self.list_of_blobs,
-            self.list_of_blobs_no_gaps
-        )
 
         trajectories_file = os.path.join(
             obj_path,
