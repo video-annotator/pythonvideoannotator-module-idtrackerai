@@ -333,6 +333,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         """
         if self.list_of_blobs is None: return
 
+        if frame_index >= len(self.list_of_blobs.blobs_in_video):
+            return
+
         image = frame.copy()
         blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
