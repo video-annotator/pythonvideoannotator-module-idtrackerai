@@ -97,7 +97,7 @@ class IdtrackeraiObjectMouseEvents(object):
             )
 
             # Update only if the new identity is different from the old one.
-            if new_blob_identity!=identity:
+            if new_blob_identity!=identity and new_blob_identity is not None:
                 try:
                     blob.update_identity(new_blob_identity, centroid)
                     blob.propagate_identity(new_blob_identity, centroid)
