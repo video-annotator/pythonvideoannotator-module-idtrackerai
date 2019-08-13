@@ -1,4 +1,6 @@
-import math
+import math, logging
+
+logger = logging.getLogger(__name__)
 
 class SelectedBlob(object):
     """
@@ -34,7 +36,7 @@ class IdtrackeraiObjectMouseEvents(object):
         :param int y: Y coordinate.
         """
 
-        if not self._add_blobchk.value:
+        if not self._add_centroidchk.value:
 
             selected = False
 
@@ -73,14 +75,18 @@ class IdtrackeraiObjectMouseEvents(object):
                 try:
                     self.selected.blob.add_centroid(self.video_object, (x,y), identity )
                 except Exception as e:
+                    logger.debug(str(e), exc_info=True)
                     self.warning(str(e), 'Error')
 
-            self._add_blobchk.value = False
+            self._add_centroidchk.value = False
             self._tmp_object_pos = None
             self._drag_active = False
 
 
     def on_double_click(self, event, x, y):
+
+        p0          = x, y
+        frame_index = self.mainwindow.timeline.value
 
         # if one object is selected
         if self.selected is not None:
@@ -102,7 +108,21 @@ class IdtrackeraiObjectMouseEvents(object):
                     blob.update_identity(new_blob_identity, centroid)
                     blob.propagate_identity(new_blob_identity, centroid)
                 except Exception as e:
+                    logger.debug(str(e), exc_info=True)
                     self.warning(str(e), 'Error')
+
+        elif self._add_blobchk.value:
+            new_blob_identity = self.input_int(
+                'Type the identity for the new blob',
+                title='New identity',
+                default=0
+            )
+            try:
+                self.list_of_blobs.add_blob(self.video_object, frame_index,
+                                            (x, y), new_blob_identity)
+            except Exception as e:
+                logger.debug(str(e), exc_info=True)
+                self.warning(str(e), 'Error')
 
 
     def on_drag(self, p1, p2):

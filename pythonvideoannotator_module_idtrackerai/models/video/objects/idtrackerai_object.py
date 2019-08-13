@@ -44,7 +44,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
     def __init__(self, video):
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
-        self._add_blobchk = ControlCheckBox('Add centroid', default=False, visible=False)
+        self._add_centroidchk = ControlCheckBox('Add centroid', default=False, visible=False)
+        self._add_blobchk = ControlCheckBox('Add blob', default=False, visible=True)
         self._first_gfrag = ControlButton('Go to first global fragment', default=self.__go_to_first_global_fragment)
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
@@ -68,8 +69,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self.formset = [
             '_name',
             '_first_gfrag',
-            '_add_blobchk',
+            '_add_centroidchk',
             '_del_centroids_btn',
+            '_add_blobchk',
             '_reset_btn',
             '_closepaths_btn',
             ' ',
@@ -390,11 +392,13 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
         if value is None:
             self._del_centroids_btn.hide()
-            self._add_blobchk.hide()
+            self._add_centroidchk.hide()
+            self._add_blobchk.show()
             self._reset_btn.label = self.RESET_BTN_LABEL
             self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL
         else:
-            self._add_blobchk.show()
+            self._add_centroidchk.show()
+            self._add_blobchk.hide()
             self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(self.selected.identity)
             self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(self.selected.identity)
 
