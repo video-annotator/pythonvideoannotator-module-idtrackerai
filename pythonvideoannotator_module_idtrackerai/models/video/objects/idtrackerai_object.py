@@ -45,7 +45,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
         self._add_centroidchk = ControlCheckBox('Add centroid', default=False, visible=False)
-        self._add_blobchk = ControlCheckBox('Add blob', default=False, visible=True)
+        self._add_blobchk = ControlCheckBox('Add blob', default=False, visible=False)
         self._first_gfrag = ControlButton('Go to first global fragment', default=self.__go_to_first_global_fragment)
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
