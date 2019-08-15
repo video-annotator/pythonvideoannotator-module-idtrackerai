@@ -82,8 +82,8 @@ class IdtrackeraiObjectIO(object):
         self.list_of_blobs = np.load(path, allow_pickle=True).item()
         self.list_of_blobs.reconnect()
         path = os.path.join(project_path, 'preprocessing', 'fragments.npy')
-        self.list_of_framents = np.load(path, allow_pickle=True).item()
+        if not os.path.exists(path) and self.video_object.number_of_animals == 1:
+            self.list_of_framents = None
+        else:
+            self.list_of_framents = np.load(path, allow_pickle=True).item()
         self.colors = get_spaced_colors_util(self.video_object.number_of_animals, black = True)
-
-
-
