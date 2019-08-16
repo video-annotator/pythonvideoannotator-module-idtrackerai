@@ -17,10 +17,13 @@ class IdtrackeraiObjectIO(object):
         idtrackerai_prj_path = os.path.relpath(self.idtrackerai_prj_path, obj_path)
         data['idtrackerai-project-path'] = idtrackerai_prj_path
 
+        logger.info("Disconnecting list of blobs")
         self.list_of_blobs.disconnect()
 
+        logger.info("Saving list of blobs")
         path = os.path.join(obj_path, idtrackerai_prj_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
         np.save(path, self.list_of_blobs)
+        logger.info("List of blobs saved")
 
         timestamp_str = datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d_%H%M%S')
 
@@ -30,24 +33,32 @@ class IdtrackeraiObjectIO(object):
             'trajectories_wo_gaps',
             'trajectories_wo_gaps_{}.npy'.format(timestamp_str)
         )
-
+        logger.info("Producing trajectories without gaps")
         trajectories_wo_gaps = produce_output_dict(
             self.list_of_blobs.blobs_in_video,
             self.video_object
         )
+        logger.info("Saving trajectories without gaps")
         np.save(trajectories_wo_gaps_file, trajectories_wo_gaps)
+        logger.info("Trajectories without gaps saved")
 
         trajectories_file = os.path.join(
             obj_path,
-            self.video_object.trajectories_folder,
+            idtrackerai_prj_path,
+            'trajectories',
             'trajectories_{}.npy'.format(timestamp_str)
         )
+        logger.info("Producing trajectories")
         trajectories = produce_output_dict(
             self.list_of_blobs.blobs_in_video,
             self.video_object
         )
+        logger.info("Saving trajectories")
         np.save(trajectories_file, trajectories)
+        logger.info("Trajectories saved")
+        logger.info("Saving video")
         self.video_object.save()
+        logger.info("Video saved")
 
         return super().save(data, obj_path)
 
@@ -56,7 +67,9 @@ class IdtrackeraiObjectIO(object):
     def load(self, data, obj_path):
         idtrackerai_prj_path = os.path.join(obj_path, data['idtrackerai-project-path'])
 
+        logger.info("Loading video object")
         videoobj = np.load(os.path.join(idtrackerai_prj_path, 'video_object.npy'), allow_pickle=True).item()
+        logger.info("Video object loaded")
 
         self.load_from_idtrackerai(
             idtrackerai_prj_path,
@@ -79,11 +92,18 @@ class IdtrackeraiObjectIO(object):
         if not os.path.exists(path):
             path = os.path.join(project_path, 'preprocessing', 'blobs_collection.npy')
 
+        logger.info("Loading list of blobs")
         self.list_of_blobs = np.load(path, allow_pickle=True).item()
+        logger.info("List of blobs loaded")
+        logger.info("Connecting list of blobs")
         self.list_of_blobs.reconnect()
+        logger.info("List of blobs connected")
+        logger.info("Loading fragments")
         path = os.path.join(project_path, 'preprocessing', 'fragments.npy')
         if not os.path.exists(path) and self.video_object.number_of_animals == 1:
             self.list_of_framents = None
+            logger.info("Fragments did not exist")
         else:
             self.list_of_framents = np.load(path, allow_pickle=True).item()
+            logger.info("Loading fragments")
         self.colors = get_spaced_colors_util(self.video_object.number_of_animals, black = True)
