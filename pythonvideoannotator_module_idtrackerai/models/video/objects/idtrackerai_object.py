@@ -3,6 +3,7 @@ import numpy as np, cv2, logging
 from AnyQt import QtCore
 from confapp import conf
 from AnyQt.QtGui import QKeySequence
+from PyQt5.QtWidgets import QApplication
 from pyforms.basewidget import BaseWidget
 from pyforms.controls import ControlText
 from pyforms.controls import ControlButton
@@ -41,6 +42,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
     INTERPOLATE_BTN_LABEL = 'Global interpolation'
     INTERPOLATE_BTN_LABEL_FOR_ID = 'Local interpolation for {0}'
 
+    SAVE_BTN_LABEL = 'Save updated identities'
+    SAVE_BTN_LABEL_SAVING = 'Saving...'
+
     def __init__(self, video):
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
@@ -49,6 +53,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self._first_gfrag = ControlButton('Go to first global fragment', default=self.__go_to_first_global_fragment)
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
+
+        self._save_btn = ControlButton(self.SAVE_BTN_LABEL, default=self.__save_updated_identities)
 
         IModelGUI.__init__(self)
         VideoObject.__init__(self, video=video)
@@ -74,6 +80,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             '_add_blobchk',
             '_reset_btn',
             '_closepaths_btn',
+            '_save_btn',
             ' ',
             '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
             ' '
@@ -102,6 +109,15 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
     ######################################################################
     ### Events ###########################################################
     ######################################################################
+
+    def __save_updated_identities(self):
+        self._save_btn.label = self.SAVE_BTN_LABEL_SAVING
+        self._save_btn.enabled = False
+        QApplication.processEvents()
+        self.save_updated_identities()
+        self._save_btn.enabled = True
+        self._save_btn.label = self.SAVE_BTN_LABEL
+        QApplication.processEvents()
 
     def __go_to_first_global_fragment(self):
         self.mainwindow.player.video_index = self.get_first_frame()
