@@ -43,6 +43,10 @@ class IdtrackeraiObjectMouseEvents(object):
             p0          = x, y
             frame_index = self.mainwindow.timeline.value
 
+            # no blobs to select, exit the function
+            if len(self.list_of_blobs.blobs_in_video)<frame_index:
+                return
+
             # blobs in the current frame
             blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
