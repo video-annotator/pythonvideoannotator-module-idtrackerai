@@ -36,15 +36,17 @@ class IdtrackeraiObjectMouseEvents(object):
         :param int y: Y coordinate.
         """
 
+        frame_index = self.mainwindow.timeline.value
         if not self._add_centroidchk.value:
 
             selected = False
 
             p0          = x, y
-            frame_index = self.mainwindow.timeline.value
+
 
             # no blobs to select, exit the function
-            if len(self.list_of_blobs.blobs_in_video)<frame_index:
+            if not self.list_of_blobs.blobs_in_video[frame_index]:
+                self.selected = None
                 return
 
             # blobs in the current frame
@@ -66,7 +68,7 @@ class IdtrackeraiObjectMouseEvents(object):
             if not selected:
                 self.selected = None
 
-        elif self.selected:
+        elif self.selected and self.selected.blob.frame_number == frame_index:
 
             # ask the new blob identity
             identity = self.input_int(
@@ -85,6 +87,11 @@ class IdtrackeraiObjectMouseEvents(object):
             self._add_centroidchk.value = False
             self._tmp_object_pos = None
             self._drag_active = False
+
+        elif self.selected and self.selected.blob.frame_number != frame_index:
+            self.selected = None
+            self._add_centroidchk.value = False
+
 
 
     def on_double_click(self, event, x, y):
