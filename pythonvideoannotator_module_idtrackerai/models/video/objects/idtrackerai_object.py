@@ -313,6 +313,35 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         elif key == conf.SHORT_KEYS['Go to previous crossing.']:
             self.__jump2previous_crossing()
 
+        # Check the add centroid check box
+        elif key == conf.SHORT_KEYS['Check/Uncheck add centroid.']:
+            self.__check_uncheck_add_centroid_box()
+
+        # Check the add blob check box
+        elif key == conf.SHORT_KEYS['Check/Uncheck add blob.']:
+            self.__check_uncheck_add_blob_box()
+
+        # Delete centroid
+        elif key == conf.SHORT_KEYS['Delete centroid.']:
+            self.__delete_centroids_btn_evt()
+
+
+    def __check_uncheck_add_centroid_box(self):
+        if self._add_centroidchk.visible and self.selected is not None:
+            if self._add_centroidchk.value:
+                self._add_centroidchk.value = False
+            else:
+                self._add_centroidchk.value = True
+
+
+    def __check_uncheck_add_blob_box(self):
+        if self._add_blobchk.visible and self.selected is None:
+            if self._add_blobchk.value:
+                self._add_blobchk.value = False
+            else:
+                self._add_blobchk.value = True
+
+
 
     def __jump2previous_crossing(self):
         """

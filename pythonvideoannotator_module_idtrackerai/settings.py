@@ -10,6 +10,11 @@ def path(filename):
 ANNOTATOR_ICON_IDTRACKERAI = path('idtrackerai.png')
 
 IDTRACKERAI_SHORT_KEYS= {
-    'Go to next crossing.': 'Ctrl+M',
-    'Go to previous crossing.': 'Ctrl+N',
+    'Jumps 1 frame backward.':                  'X',
+    'Jumps 1 frame forward.':                   'Z',
+    'Go to next crossing.':                     'Ctrl+X',
+    'Go to previous crossing.':                 'Ctrl+Z',
+    'Check/Uncheck add centroid.':              'Ctrl+C',
+    'Check/Uncheck add blob.':                  'Ctrl+A',
+    'Delete centroid.':                         'Ctrl+D'
 }
