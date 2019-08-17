@@ -128,12 +128,13 @@ class IdtrackeraiObjectMouseEvents(object):
                 title='New identity',
                 default=0
             )
-            try:
-                self.list_of_blobs.add_blob(self.video_object, frame_index,
-                                            (x, y), new_blob_identity)
-            except Exception as e:
-                logger.debug(str(e), exc_info=True)
-                self.warning(str(e), 'Error')
+            if not( new_blob_identity in ['', None]):
+                try:
+                    self.list_of_blobs.add_blob(self.video_object, frame_index,
+                                                (x, y), new_blob_identity)
+                except Exception as e:
+                    logger.debug(str(e), exc_info=True)
+                    self.warning(str(e), 'Error')
 
 
     def on_drag(self, p1, p2):
