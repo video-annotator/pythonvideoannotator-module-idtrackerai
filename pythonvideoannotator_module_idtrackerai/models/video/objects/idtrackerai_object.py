@@ -48,7 +48,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
     def __init__(self, video):
         self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
         self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
-        self._add_centroidchk = ControlCheckBox('Add centroid', default=False, visible=False)
+        self._add_centroidchk = ControlCheckBox('Add centroid to selected blob', default=False, visible=False)
         self._add_blobchk = ControlCheckBox('Add blob', default=False, visible=False)
         self._first_gfrag = ControlButton('Go to first global fragment', default=self.__go_to_first_global_fragment)
 
@@ -281,7 +281,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             return
 
         try:
-            self.selected.blob.remove_centroid(
+            self.selected.blob.delete_centroid(
                 self.video_object,
                 self.selected.identity,
                 self.selected.position,
@@ -357,12 +357,23 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         image = frame.copy()
         blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
+        new_selected=None
+        for blob in blobs:
+            if self.selected is not None:
+                if blob.fragment_identifier == self.selected.blob.fragment_identifier and self.selected.identity in blob.final_identities:
+                    index_identity = blob.final_identities.index(self.selected.identity)
+                    new_centroid = blob.final_centroids[index_identity]
+                    new_selected = SelectedBlob(blob, self.selected.identity, new_centroid)
+        self.selected=new_selected
+
+
         for blob in blobs:
 
             blob.draw(
                 image,
                 colors_lst=self.colors,
-                selected_id=self.selected.identity if self.selected else None
+                selected_id=self.selected.identity if self.selected else None,
+                is_selected=self.selected.blob==blob if self.selected else False,
             )
 
         #if self.selected:

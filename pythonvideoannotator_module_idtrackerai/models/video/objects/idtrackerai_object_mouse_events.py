@@ -21,6 +21,8 @@ class SelectedBlob(object):
 
 class IdtrackeraiObjectMouseEvents(object):
 
+    RADIUS_TO_SELECT_BLOB = 10
+
     def __init__(self):
 
         self._tmp_object_pos = None # used to store the temporary object position on drag
@@ -57,7 +59,7 @@ class IdtrackeraiObjectMouseEvents(object):
                 for identity, p1 in zip(blob.final_identities, blob.final_centroids_full_resolution):
 
                     # check if which blob was selected
-                    if math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)<10:
+                    if math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)<self.RADIUS_TO_SELECT_BLOB:
 
                         self.mainwindow.player.stop()
 
@@ -117,7 +119,7 @@ class IdtrackeraiObjectMouseEvents(object):
             if new_blob_identity!=identity and new_blob_identity is not None:
                 try:
                     blob.update_identity(new_blob_identity, centroid)
-                    blob.propagate_identity(new_blob_identity, centroid)
+                    blob.propagate_identity(identity, new_blob_identity, centroid)
                 except Exception as e:
                     logger.debug(str(e), exc_info=True)
                     self.warning(str(e), 'Error')
