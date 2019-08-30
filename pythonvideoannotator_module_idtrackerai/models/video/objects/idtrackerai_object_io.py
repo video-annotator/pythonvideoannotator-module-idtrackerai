@@ -11,11 +11,10 @@ class IdtrackeraiObjectIO(object):
 
     FACTORY_FUNCTION = 'create_idtrackerai_object'
 
-    # def save(self, data={}, obj_path=None):
-    #     idtrackerai_prj_path = os.path.relpath(self.idtrackerai_prj_path, obj_path)
-    #     data['idtrackerai-project-path'] = idtrackerai_prj_path
-    #
-    #     return super().save(data, obj_path)
+    def save(self, data={}, obj_path=None):
+        idtrackerai_prj_path = os.path.relpath(self.idtrackerai_prj_path, obj_path)
+        data['idtrackerai-project-path'] = idtrackerai_prj_path
+        return super().save(data, obj_path)
 
     def save_updated_identities(self):
         logger.info("Disconnecting list of blobs...")
@@ -60,11 +59,16 @@ class IdtrackeraiObjectIO(object):
         logger.info("Video saved")
 
     def load(self, data, obj_path):
-        idtrackerai_prj_path = os.path.join(obj_path, data['idtrackerai-project-path'])
+        path = data.get('idtrackerai-project-path', None)
+        if path is None:
+            return
+
+        idtrackerai_prj_path = os.path.join(obj_path, path)
 
         logger.info("Loading video object...")
-        videoobj = np.load(os.path.join(idtrackerai_prj_path, 'video_object.npy'), allow_pickle=True).item()
-        videoobj.update_paths()
+        vidobj_path = os.path.join(idtrackerai_prj_path, 'video_object.npy')
+        videoobj = np.load(vidobj_path, allow_pickle=True).item()
+        videoobj.update_paths(vidobj_path)
         logger.info("Video object loaded")
 
         self.load_from_idtrackerai(
@@ -77,7 +81,7 @@ class IdtrackeraiObjectIO(object):
         vidobj_path = os.path.join(project_path, 'video_object.npy')
         if video_object is None:
             video_object = np.load(vidobj_path, allow_pickle=True).item()
-            video_object.update_paths()
+            video_object.update_paths(vidobj_path)
 
         self.idtrackerai_prj_path = project_path
 
