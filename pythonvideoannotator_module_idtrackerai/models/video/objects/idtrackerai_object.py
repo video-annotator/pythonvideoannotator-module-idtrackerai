@@ -54,6 +54,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
         self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
 
+        self._add_idsgroup_btn = ControlButton('Add identities group', default=self.__group_identities)
+
         self._save_btn = ControlButton(self.SAVE_BTN_LABEL, default=self.__save_updated_identities)
 
         IModelGUI.__init__(self)
@@ -80,6 +82,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             '_add_blobchk',
             '_reset_btn',
             '_closepaths_btn',
+            '_add_idsgroup_btn',
             '_save_btn',
             ' ',
             '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
@@ -118,6 +121,32 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self._save_btn.enabled = True
         self._save_btn.label = self.SAVE_BTN_LABEL
         QApplication.processEvents()
+
+    def __group_identities(self):
+
+        group_name = self.input_text('Group name', title='Type the name of the group', default=None)
+
+        overwrite_name = True
+        if group_name in self.video_object.identities_groups:
+            overwrite_name = self.question(
+                'The group name {} is already in use. Do you want to overwrite it?'.format(group_name),
+                title='Overwrite group name'
+            )
+        if overwrite_name:
+            identities = self.input_text('Identities', title='Type the identities separated by commas', default=None)
+            identities = [int(id) for id in identities.split(',')]
+            identity_exists = False
+            for identity in identities:
+                for group in self.video_object.identities_groups:
+                    if identity in self.video_object.identities_groups[group]:
+                        self.message(
+                            'The identity {} is already in the group {}'.format(identity, group),
+                            title='Identity already exists',
+                            msg_type='warning'
+                        )
+                        return
+
+            self.video_object.identities_groups[group_name] = identities
 
     def __go_to_first_global_fragment(self):
         self.mainwindow.player.video_index = self.get_first_frame()
