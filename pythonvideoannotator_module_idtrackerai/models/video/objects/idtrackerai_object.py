@@ -135,7 +135,6 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         if overwrite_name:
             identities = self.input_text('Identities', title='Type the identities separated by commas', default=None)
             identities = [int(id) for id in identities.split(',')]
-            identity_exists = False
             for identity in identities:
                 for group in self.video_object.identities_groups:
                     if identity in self.video_object.identities_groups[group]:
