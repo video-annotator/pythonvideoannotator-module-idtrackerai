@@ -1,8 +1,20 @@
 import time, copy, numpy as np, os, logging
 
+from confapp import conf
+
+try:
+    import sys
+    sys.path.append(os.getcwd())
+    import local_settings
+    conf += local_settings
+except Exception as e:
+    print(e)
+    pass
+
 from datetime import datetime
 from idtrackerai.utils.py_utils import get_spaced_colors_util
 from idtrackerai.postprocessing.get_trajectories import produce_output_dict
+from idtrackerai.postprocessing.trajectories_to_csv import convert_trajectories_file_to_csv_and_json
 from idtrackerai.postprocessing.identify_non_assigned_with_interpolation import assign_zeros_with_interpolation_identities
 
 logger = logging.getLogger(__name__)
@@ -39,6 +51,9 @@ class IdtrackeraiObjectIO(object):
         )
         logger.info("Saving trajectories without gaps...")
         np.save(trajectories_wo_gaps_file, trajectories_wo_gaps)
+        if conf.CONVERT_TRAJECTORIES_DICT_TO_CSV_AND_JSON:
+            logger.info("Saving trajectories in csv format...")
+            convert_trajectories_file_to_csv_and_json(trajectories_wo_gaps_file)
         logger.info("Trajectories without gaps saved")
 
         trajectories_file = os.path.join(
@@ -53,6 +68,9 @@ class IdtrackeraiObjectIO(object):
         )
         logger.info("Saving trajectories...")
         np.save(trajectories_file, trajectories)
+        if conf.CONVERT_TRAJECTORIES_DICT_TO_CSV_AND_JSON:
+            logger.info("Saving trajectories in csv format...")
+            convert_trajectories_file_to_csv_and_json(trajectories_file)
         logger.info("Trajectories saved")
         logger.info("Saving video object...")
         self.video_object.save()
