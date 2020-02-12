@@ -118,7 +118,7 @@ class IdtrackeraiObjectMouseEvents(object):
             # Update only if the new identity is different from the old one.
             if new_blob_identity is not None:
                 try:
-                    blob.update_identity(new_blob_identity, centroid)
+                    blob.update_identity(identity, new_blob_identity, centroid)
                     blob.propagate_identity(identity, new_blob_identity, centroid)
                 except Exception as e:
                     logger.debug(str(e), exc_info=True)
@@ -152,7 +152,7 @@ class IdtrackeraiObjectMouseEvents(object):
 
         if self._tmp_object_pos and self.selected and self.selected.blob:
 
-            self.selected.blob.update_centroid(self.video_object, self.selected.position, p2)
+            self.selected.blob.update_centroid(self.video_object, self.selected.position, p2, self.selected.identity)
             self.selected.position = p2
 
         self._tmp_object_pos = None
