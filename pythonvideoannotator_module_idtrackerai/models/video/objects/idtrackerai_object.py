@@ -486,7 +486,7 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(self.selected.identity)
             self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(self.selected.identity)
 
-            if len(value.blob.final_centroids_full_resolution) > 1:
+            if value.blob.removable_identity(value.identity, self.list_of_blobs.blobs_in_video[value.blob.frame_number]):
                 self._del_centroids_btn.show()
             else:
                 self._del_centroids_btn.hide()
