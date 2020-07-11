@@ -3,7 +3,8 @@ class IdTrackerObject2d(object):
 
     def save(self, data, object2d_path=None):
 
-        data['idtrackerai-path'] = self.idtrackerai_path.name
+        if hasattr(self, 'idtrackerai_path'):
+            data['idtrackerai-path'] = self.idtrackerai_path.name
         data = super().save(data, object2d_path)
 
         return data

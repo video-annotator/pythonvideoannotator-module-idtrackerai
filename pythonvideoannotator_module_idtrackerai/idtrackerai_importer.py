@@ -1,4 +1,9 @@
-import numpy as np, os
+import numpy as np, os, sys
+
+import sys
+
+
+
 
 def import_idtrackerai_project(project, project_path, progress_event=None):
     """
@@ -10,38 +15,47 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
     """
 
     blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection_no_gaps.npy')
+    if not os.path.exists(blobs_path):
+        blobs_path = os.path.join(project_path, 'preprocessing', 'blobs_collection.npy')
     vidobj_path = os.path.join(project_path, 'video_object.npy')
 
-    b = np.load(blobs_path).item()
-    v = np.load(vidobj_path).item()
+    b = np.load(blobs_path, allow_pickle=True).item()
+    v = np.load(vidobj_path, allow_pickle=True).item()
 
     resolution = v._resolution_reduction
 
+    videofile = os.path.basename(v._video_path)
+
     video = project.create_video()
-    video.filepath = v._video_path
+    video.filepath = os.path.join(project_path, '..',videofile)
 
     objs = {}
     paths = {}
     crossings = {}
     fragments = {}
+    modifications = {}
+    idswitchs = {}
+
+
+    total_blobs = len(b.blobs_in_video)
 
     # update the progress
     if progress_event is not None:
-        progress_event(0, max_count=len(b.blobs_in_video))
+        progress_event(0, max_count=total_blobs)
 
     for frame_index, frame_data in enumerate(b.blobs_in_video):
 
         # update the progress
         if progress_event is not None:
-            progress_event(frame_index)
+            progress_event(frame_index, max_count=total_blobs)
 
         for blob in frame_data:
 
-            identities = blob.final_identity if isinstance(blob.final_identity, list) else [blob.final_identity]
-            centroids = blob.interpolated_centroids if hasattr(blob, 'interpolated_centroids') else [blob.centroid]
-            fragment = blob.fragment_identifier
-            crossing = blob.is_a_crossing
-            contour = blob.contour
+            identities = blob.final_identities
+            centroids  = blob.final_centroids_full_resolution
+            fragment   = blob.fragment_identifier
+            crossing   = blob.is_a_crossing
+            contour    = blob.contour_full_resolution
 
             for identity, centroid in zip(identities, centroids):
 
@@ -66,18 +80,20 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
                     f.name = 'path fragments'
                     fragments[identity] = f
 
-                    v1 = obj.create_value()
-                    v1.name = 'path modifications'
+                    m = obj.create_value()
+                    m.name = 'modifications'
+                    modifications[identity] = m
 
-                    v2 = obj.create_value()
-                    v2.name = 'switch identity'
+                    i = obj.create_value()
+                    i.name = 'switch identities'
+                    idswitchs[identity] = i
 
                     obj.idtrackerai_path = path
-                    path.contours = cnt
+                    path.contours  = cnt
                     path.crossings = c
                     path.fragments = f
-                    path.modifications = v1
-                    path.switch_identity = v2
+                    path.modifications = m
+                    path.switch_identity = i
 
                 centroid = (int(round(centroid[0] / resolution)),
                             int(round(centroid[1] / resolution))) if centroid is not None else None
@@ -89,4 +105,4 @@ def import_idtrackerai_project(project, project_path, progress_event=None):
 
     # update the progress
     if progress_event is not None:
-        progress_event( len(b.blobs_in_video) )
+        progress_event( len(b.blobs_in_video), max_count=total_blobs )

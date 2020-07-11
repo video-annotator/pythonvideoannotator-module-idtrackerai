@@ -1,48 +1,29 @@
-import os, numpy as np
-from confapp import conf
-from AnyQt.QtWidgets import QFileDialog
-from .idtrackerai_importer import import_idtrackerai_project
+from . import settings as conf
+from AnyQt import QtGui
+from pythonvideoannotator_module_idtrackerai.models.video.objects.idtrackerai_object import IdtrackeraiObject
+import cv2
 
 class Module(object):
 
 	def __init__(self):
 		"""
-		This implements the Path edition functionality
-		"""
+        This implements the DeepLab functionality
+        """
 		super(Module, self).__init__()
 
-		self.mainmenu[0]['File'].insert(1, {
-			'Open IdTracker.ai project': self.__import_idtrackerai_project_evt,
-			'icon': conf.ANNOTATOR_ICON_OPEN
-		})
-
-	def __update_progress_evt(self, progress_count, max_count=None):
-		if max_count is not None:
-			self._progress.max = max_count
-			self._progress.value = 0
-			self._progress.show()
-		elif self._progress.max==progress_count:
-			self._progress.hide()
-		else:
-			self._progress.value = progress_count
-		
-
-	def __import_idtrackerai_project_evt(self):
-
-		project_path = QFileDialog.getExistingDirectory(
-			self,
-			"Select the project directory"
+		self.mainmenu[1]['Modules'].append(
+			{'idtrackerai': self.__open_idtrackerai_window, 'icon': QtGui.QIcon(conf.ANNOTATOR_ICON_IDTRACKERAI) },
 		)
-		try:
-			if project_path is not None and str(project_path) != '':
 
-				import_idtrackerai_project(
-					self.project,
-					project_path,
-					progress_event=self.__update_progress_evt
-				)
+	def __open_idtrackerai_window(self):
+		self.message('The idtrackerai plugin is installed', 'idtrackerai plugin')
 
-		except Exception as e:
-			self.critical(str(e), 'Error')
 
-		self._progress.hide()
+	# def process_frame_event(self, frame):
+	# 	selected = self.project.tree.selected_item
+	#
+	# 	if selected and isinstance(selected.win, IdtrackeraiObject):
+	# 		reduction = selected.win.video_object.resolution_reduction
+	# 		frame = cv2.resize(frame, None, fx=reduction, fy=reduction, interpolation=cv2.INTER_AREA)
+	#
+	# 	return super().process_frame_event(frame)
