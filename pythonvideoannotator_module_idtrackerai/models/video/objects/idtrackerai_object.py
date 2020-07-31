@@ -1,3 +1,4 @@
+import os
 import numpy as np, cv2, logging
 
 from AnyQt import QtCore
@@ -8,102 +9,139 @@ from pyforms.basewidget import BaseWidget
 from pyforms.controls import ControlText
 from pyforms.controls import ControlButton
 from pyforms.controls import ControlCheckBox
+from pyforms.controls import ControlTextArea
 from .idtrackerai_object_io import IdtrackeraiObjectIO
 from .idtrackerai_object_mouse_events import IdtrackeraiObjectMouseEvents
-from pythonvideoannotator_models.models.video.objects.video_object import VideoObject
+from pythonvideoannotator_models.models.video.objects.video_object import (
+    VideoObject,
+)
 from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
 
 from pythonvideoannotator_module_idtrackerai import settings
 
 logger = logging.getLogger(__name__)
 
+
 class SelectedBlob(object):
     """
     Class to store information about the selected blob.
     """
+
     def __init__(self, blob, blob_id, blob_pos):
         """
         :param int blob: Blob object.
         :param int blob_id: Id of the blob object.
         :param int blob_pos: Blob position.
         """
-        self.blob     = blob
+        self.blob = blob
         self.position = blob_pos
         self.identity = blob_id
 
 
+class IdtrackeraiObject(
+    IdtrackeraiObjectMouseEvents,
+    IModelGUI,
+    IdtrackeraiObjectIO,
+    VideoObject,
+    BaseWidget,
+):
 
+    RESET_BTN_LABEL = "Clear user updates for all identities"
+    RESET_BTN_LABEL_FOR_ID = "Clear user updates for {0}"
 
-class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObjectIO, VideoObject, BaseWidget):
+    INTERPOLATE_BTN_LABEL = "Global interpolation"
+    INTERPOLATE_BTN_LABEL_FOR_ID = "Local interpolation for {0}"
 
-    RESET_BTN_LABEL = 'Clear user updates for all identities'
-    RESET_BTN_LABEL_FOR_ID = 'Clear user updates for {0}'
+    SAVE_BTN_LABEL = "Save updated identities"
+    SAVE_BTN_LABEL_SAVING = "Saving..."
 
-    INTERPOLATE_BTN_LABEL = 'Global interpolation'
-    INTERPOLATE_BTN_LABEL_FOR_ID = 'Local interpolation for {0}'
-
-    SAVE_BTN_LABEL = 'Save updated identities'
-    SAVE_BTN_LABEL_SAVING = 'Saving...'
+    COMPUTE_GT_BTN_LABEL = "Compute ground truth accuracy"
+    COMPUTE_GT_BTN_LABEL_COMPUTING = "Computing..."
 
     def __init__(self, video):
-        self._closepaths_btn = ControlButton( self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps)
-        self._del_centroids_btn = ControlButton('Delete centroid', default=self.__delete_centroids_btn_evt)
-        self._add_centroidchk = ControlCheckBox('Add centroid to selected blob', default=False, visible=False)
-        self._add_blobchk = ControlCheckBox('Add blob', default=False, visible=False)
-        self._first_gfrag = ControlButton('Go to first global fragment', default=self.__go_to_first_global_fragment)
+        self._closepaths_btn = ControlButton(
+            self.INTERPOLATE_BTN_LABEL, default=self.__close_trajectories_gaps
+        )
+        self._del_centroids_btn = ControlButton(
+            "Delete centroid", default=self.__delete_centroids_btn_evt
+        )
+        self._add_centroidchk = ControlCheckBox(
+            "Add centroid to selected blob", default=False, visible=False
+        )
+        self._add_blobchk = ControlCheckBox(
+            "Add blob", default=False, visible=False
+        )
+        self._first_gfrag = ControlButton(
+            "Go to first global fragment",
+            default=self.__go_to_first_global_fragment,
+        )
 
-        self._reset_btn = ControlButton(self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data)
+        self._reset_btn = ControlButton(
+            self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data
+        )
 
         self._add_idsgroup_btn = ControlButton('Add identities group', default=self.__group_identities)
+        self._save_btn = ControlButton(
+            self.SAVE_BTN_LABEL, default=self.__save_updated_identities
+        )
 
-        self._save_btn = ControlButton(self.SAVE_BTN_LABEL, default=self.__save_updated_identities)
+        self._compute_gt_btn = ControlButton(
+            self.COMPUTE_GT_BTN_LABEL,
+            default=self.__compute_groundtruth_accurcay,
+        )
 
         IModelGUI.__init__(self)
         VideoObject.__init__(self, video=video)
         IdtrackeraiObjectMouseEvents.__init__(self)
-        BaseWidget.__init__(self, 'Idtrackerai Object', parent_win=video)
+        BaseWidget.__init__(self, "Idtrackerai Object", parent_win=video)
 
-        self.name = video.generate_child_name('Idtrackerai object')
+        self.name = video.generate_child_name("Idtrackerai object")
 
         self._video = video
         self._video += self
         self.create_tree_nodes()
 
-        self.video_object     = None # IdtrackerAI VideoObject
-        self.list_of_blobs    = None # IdtrackerAI ListOfBlobs
-        self.list_of_framents = None # IdtrackerAI ListOfFragments
-
+        self.video_object = None  # IdtrackerAI VideoObject
+        self.list_of_blobs = None  # IdtrackerAI ListOfBlobs
+        self.list_of_framents = None  # IdtrackerAI ListOfFragments
 
         self.formset = [
-            '_name',
+            "_name",
             '_first_gfrag',
-            '_add_centroidchk',
-            '_del_centroids_btn',
-            '_add_blobchk',
-            '_reset_btn',
-            '_closepaths_btn',
+            "_first_gfrag",
+            "_add_centroidchk",
+            "_del_centroids_btn",
+            "_add_blobchk",
+            "_reset_btn",
+            "_closepaths_btn",
+            "_save_btn",
+            "_compute_gt_btn",
             '_add_idsgroup_btn',
-            '_save_btn',
-            ' ',
             '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
-            ' '
+            " ",
         ]
 
     def create_tree_nodes(self):
-        self.treenode = self.tree.create_child(self.name, icon=settings.ANNOTATOR_ICON_IDTRACKERAI, parent=self.video.treenode)
+        self.treenode = self.tree.create_child(
+            self.name,
+            icon=settings.ANNOTATOR_ICON_IDTRACKERAI,
+            parent=self.video.treenode,
+        )
         self.treenode.win = self
 
         self.tree.add_popup_menu_option(
-            label='Convert to contours',
+            label="Convert to contours",
             function_action=self.__convert_to_contours,
-            item=self.treenode, icon=conf.ANNOTATOR_ICON_CONTOUR
+            item=self.treenode,
+            icon=conf.ANNOTATOR_ICON_CONTOUR,
         )
 
-        self.tree.add_popup_menu_option('-', item=self.treenode)
+        self.tree.add_popup_menu_option("-", item=self.treenode)
         self.tree.add_popup_menu_option(
-            label='Remove',
+            label="Remove",
             function_action=self.__remove_object,
-            item=self.treenode, icon=conf.ANNOTATOR_ICON_DELETE
+            item=self.treenode,
+            icon=conf.ANNOTATOR_ICON_DELETE,
         )
 
     def get_first_frame(self):
@@ -112,6 +150,26 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
     ######################################################################
     ### Events ###########################################################
     ######################################################################
+
+    def __compute_groundtruth_accurcay(self):
+        self._compute_gt_btn.label = self.COMPUTE_GT_BTN_LABEL_COMPUTING
+        self._compute_gt_btn.enabled = False
+        QApplication.processEvents()
+        print(self.video_object.ground_truth_path)
+        if os.path.exists(self.video_object.ground_truth_path):
+            answer = self.question(
+                "A groundtruth file already exists. "
+                "Do you want to overwrite it?",
+                title="Overrite groundtruth",
+                buttons=["no", "yes"],
+            )
+            print(answer)
+            self.compute_gt_accuracy(generate=answer == "yes")
+        else:
+            self.compute_gt_accuracy()
+        self._compute_gt_btn.enabled = True
+        self._compute_gt_btn.label = self.COMPUTE_GT_BTN_LABEL
+        QApplication.processEvents()
 
     def __save_updated_identities(self):
         self._save_btn.label = self.SAVE_BTN_LABEL_SAVING
@@ -153,7 +211,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
     def __remove_object(self):
         item = self.tree.selected_item
-        if item is not None: self.video -= item.win
+        if item is not None:
+            self.video -= item.win
 
     def __convert_to_contours(self):
 
@@ -174,7 +233,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self.mainwindow.progress_bar.max = total_blobs
         self.mainwindow.progress_bar.show()
 
-        for frame_index, frame_data in enumerate(self.list_of_blobs.blobs_in_video):
+        for frame_index, frame_data in enumerate(
+            self.list_of_blobs.blobs_in_video
+        ):
 
             # update the progress
             self.mainwindow.progress_bar.value = frame_index
@@ -185,7 +246,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
                 crossing = blob.is_a_crossing
                 contour = blob.contour_full_resolution
 
-                for identity, centroid in zip(blob.final_identities, blob.final_centroids_full_resolution):
+                for identity, centroid in zip(
+                    blob.final_identities, blob.final_centroids_full_resolution
+                ):
 
                     if identity not in objs:
                         obj = video.create_object()
@@ -194,26 +257,26 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
 
                         path = obj.create_path()
                         path.show_object_name = True
-                        path.name = 'path'
+                        path.name = "path"
                         paths[identity] = path
 
                         cnt = obj.create_contours()
-                        cnt.name = 'contours'
+                        cnt.name = "contours"
 
                         c = obj.create_value()
-                        c.name = 'crossings'
+                        c.name = "crossings"
                         crossings[identity] = c
 
                         f = obj.create_value()
-                        f.name = 'path fragments'
+                        f.name = "path fragments"
                         fragments[identity] = f
 
                         m = obj.create_value()
-                        m.name = 'modifications'
+                        m.name = "modifications"
                         modifications[identity] = m
 
                         i = obj.create_value()
-                        i.name = 'switch identities'
+                        i.name = "switch identities"
                         idswitchs[identity] = i
 
                         obj.idtrackerai_path = path
@@ -223,10 +286,18 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
                         path.modifications = m
                         path.switch_identity = i
 
-                    centroid = (int(round(centroid[0] / resolution)),
-                                int(round(centroid[1] / resolution))) if centroid is not None else None
+                    centroid = (
+                        (
+                            int(round(centroid[0] / resolution)),
+                            int(round(centroid[1] / resolution)),
+                        )
+                        if centroid is not None
+                        else None
+                    )
 
-                    paths[identity].contours.set_contour(frame_index, np.int32(np.rint(contour / resolution)))
+                    paths[identity].contours.set_contour(
+                        frame_index, np.int32(np.rint(contour / resolution))
+                    )
                     paths[identity][frame_index] = centroid
                     crossings[identity][frame_index] = 1 if crossing else 0
                     fragments[identity][frame_index] = fragment
@@ -235,33 +306,38 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         self.mainwindow.progress_bar.value = total_blobs
         self.mainwindow.progress_bar.hide()
 
-
     def __reset_manually_corrected_data(self):
-
 
         try:
             start = self.input_int(
-                'Initial frame', title='Select the initial frame for the reset', default=0)
+                "Initial frame",
+                title="Select the initial frame for the reset",
+                default=0,
+            )
 
             if start is None:
                 return
 
             end = self.input_int(
-                'Last frame', title='Select the last frame for the reset', default=self.video_object.number_of_frames)
+                "Last frame",
+                title="Select the last frame for the reset",
+                default=self.video_object.number_of_frames,
+            )
 
             if end is None:
                 return
 
             identity = self.selected.identity if self.selected else None
 
-            self.list_of_blobs.reset_user_generated_identities_and_centroids(self.video_object, start, end, identity)
+            self.list_of_blobs.reset_user_generated_identities_and_centroids(
+                self.video_object, start, end, identity
+            )
 
             self.mainwindow.player.refresh()
 
         except Exception as e:
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
-
 
     def __close_trajectories_gaps(self):
         """
@@ -270,19 +346,25 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         """
         try:
             start = None
-            end   = None
+            end = None
             identity = None
 
             if self.video_object.is_centroid_updated:
 
                 if self.selected:
-                    start = self.input_int('Initial frame', title='Select the initial frame for interpolation', default=0)
+                    start = self.input_int(
+                        "Initial frame",
+                        title="Select the initial frame for interpolation",
+                        default=0,
+                    )
 
-                    if start is None: return
+                    if start is None:
+                        return
 
                     end = self.input_int(
-                        'Last frame', title='Select the last frame for the interpolation',
-                        default=self.video_object.number_of_frames
+                        "Last frame",
+                        title="Select the last frame for the interpolation",
+                        default=self.video_object.number_of_frames,
                     )
 
                     if end is None:
@@ -291,18 +373,19 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
                     identity = self.selected.identity
 
                 else:
-                    raise Exception('Global interpolation is only possible if no centroids have been modified. Select an identity to perform a local interpolation')
+                    raise Exception(
+                        "Global interpolation is only possible if no centroids have been modified. Select an identity to perform a local interpolation"
+                    )
 
-            self.video_object.interpolate( self.list_of_blobs, self.list_of_framents, identity, start, end )
+            self.video_object.interpolate(
+                self.list_of_blobs, self.list_of_framents, identity, start, end
+            )
 
             self.mainwindow.player.refresh()
-
-
 
         except Exception as e:
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
-
 
     def __delete_centroids_btn_evt(self):
         if self.selected is None:
@@ -313,7 +396,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
                 self.video_object,
                 self.selected.identity,
                 self.selected.position,
-                self.list_of_blobs.blobs_in_video[self.mainwindow.timeline.value],
+                self.list_of_blobs.blobs_in_video[
+                    self.mainwindow.timeline.value
+                ],
             )
             self.mainwindow.player.refresh()
 
@@ -321,38 +406,40 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
 
-
-
     ######################################################################
     ### Key events #######################################################
     ######################################################################
 
     def key_release_event(self, evt):
 
-        key = QKeySequence(evt.modifiers() | evt.key()).toString().encode("ascii", "ignore").decode()
+        key = (
+            QKeySequence(evt.modifiers() | evt.key())
+            .toString()
+            .encode("ascii", "ignore")
+            .decode()
+        )
 
         logger.debug(key)
 
         # Jump to the next crossing.
-        if key == conf.SHORT_KEYS['Go to next crossing.']:
+        if key == conf.SHORT_KEYS["Go to next crossing."]:
             self.__jump2next_crossing()
 
         # Jump to the previous crossing.
-        elif key == conf.SHORT_KEYS['Go to previous crossing.']:
+        elif key == conf.SHORT_KEYS["Go to previous crossing."]:
             self.__jump2previous_crossing()
 
         # Check the add centroid check box
-        elif key == conf.SHORT_KEYS['Check/Uncheck add centroid.']:
+        elif key == conf.SHORT_KEYS["Check/Uncheck add centroid."]:
             self.__check_uncheck_add_centroid_box()
 
         # Check the add blob check box
-        elif key == conf.SHORT_KEYS['Check/Uncheck add blob.']:
+        elif key == conf.SHORT_KEYS["Check/Uncheck add blob."]:
             self.__check_uncheck_add_blob_box()
 
         # Delete centroid
-        elif key == conf.SHORT_KEYS['Delete centroid.']:
+        elif key == conf.SHORT_KEYS["Delete centroid."]:
             self.__delete_centroids_btn_evt()
-
 
     def __check_uncheck_add_centroid_box(self):
         if self._add_centroidchk.visible and self.selected is not None:
@@ -361,7 +448,6 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             else:
                 self._add_centroidchk.value = True
 
-
     def __check_uncheck_add_blob_box(self):
         if self._add_blobchk.visible and self.selected is None:
             if self._add_blobchk.value:
@@ -369,16 +455,16 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
             else:
                 self._add_blobchk.value = True
 
-
-
     def __jump2previous_crossing(self):
         """
         Jump to previous crossing.
         :return:
         """
         curr_frame = self.mainwindow.timeline.value
-        next_frame = self.list_of_blobs.next_frame_to_validate(curr_frame if curr_frame else 1, 'past')
-        #logger.debug('previous frame: {0}'.format(next_frame))
+        next_frame = self.list_of_blobs.next_frame_to_validate(
+            curr_frame if curr_frame else 1, "past"
+        )
+        # logger.debug('previous frame: {0}'.format(next_frame))
 
         if next_frame is not None:
             self.mainwindow.timeline.value = next_frame
@@ -389,8 +475,10 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         :return:
         """
         curr_frame = self.mainwindow.timeline.value
-        next_frame = self.list_of_blobs.next_frame_to_validate(curr_frame if curr_frame else 1, 'future')
-        #logger.debug('next frame: {0}'.format(next_frame))
+        next_frame = self.list_of_blobs.next_frame_to_validate(
+            curr_frame if curr_frame else 1, "future"
+        )
+        # logger.debug('next frame: {0}'.format(next_frame))
 
         if next_frame is not None:
             self.mainwindow.timeline.value = next_frame
@@ -406,7 +494,8 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         :param int frame_index: Index of the current frame in the video.
         :return numpy.array: The frame to draw.
         """
-        if self.list_of_blobs is None: return
+        if self.list_of_blobs is None:
+            return
 
         if frame_index >= len(self.list_of_blobs.blobs_in_video):
             return
@@ -414,15 +503,22 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         image = frame.copy()
         blobs = self.list_of_blobs.blobs_in_video[frame_index]
 
-        new_selected=None
+        new_selected = None
         for blob in blobs:
             if self.selected is not None:
-                if blob.fragment_identifier == self.selected.blob.fragment_identifier and self.selected.identity in blob.final_identities:
-                    index_identity = blob.final_identities.index(self.selected.identity)
+                if (
+                    blob.fragment_identifier
+                    == self.selected.blob.fragment_identifier
+                    and self.selected.identity in blob.final_identities
+                ):
+                    index_identity = blob.final_identities.index(
+                        self.selected.identity
+                    )
                     new_centroid = blob.final_centroids[index_identity]
-                    new_selected = SelectedBlob(blob, self.selected.identity, new_centroid)
-        self.selected=new_selected
-
+                    new_selected = SelectedBlob(
+                        blob, self.selected.identity, new_centroid
+                    )
+        self.selected = new_selected
 
         for blob in blobs:
 
@@ -430,7 +526,9 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
                 image,
                 colors_lst=self.colors,
                 selected_id=self.selected.identity if self.selected else None,
-                is_selected=self.selected.blob==blob if self.selected else False,
+                is_selected=self.selected.blob == blob
+                if self.selected
+                else False,
             )
 
         #if self.selected:
@@ -439,7 +537,14 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         #    cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 14, (255, 255, 0), 2, lineType=cv2.LINE_AA)
 
         if self._tmp_object_pos:
-            cv2.circle(image, self._tmp_object_pos, 8, (50,50,50), 2, lineType=cv2.LINE_AA)
+            cv2.circle(
+                image,
+                self._tmp_object_pos,
+                8,
+                (50, 50, 50),
+                2,
+                lineType=cv2.LINE_AA,
+            )
 
         # Draw with transparency.
         cv2.addWeighted(frame, 0.5, image, 0.5, 0, dst=frame)
@@ -448,19 +553,21 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
     ### PROPERTIES #######################################################
     ######################################################################
 
+    @property
+    def mainwindow(self):
+        return self.video.mainwindow
 
     @property
-    def mainwindow(self): return self.video.mainwindow
+    def tree(self):
+        return self.video.tree
 
     @property
-    def tree(self): return self.video.tree
+    def video_capture(self):
+        return self.video.video_capture
 
     @property
-    def video_capture(self): return self.video.video_capture
-
-    @property
-    def parent_treenode(self):  return self.video.treenode
-
+    def parent_treenode(self):
+        return self.video.treenode
 
     @property
     def selected(self):
@@ -483,10 +590,17 @@ class IdtrackeraiObject(IdtrackeraiObjectMouseEvents, IModelGUI, IdtrackeraiObje
         else:
             self._add_centroidchk.show()
             self._add_blobchk.hide()
-            self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(self.selected.identity)
-            self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(self.selected.identity)
+            self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(
+                self.selected.identity
+            )
+            self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(
+                self.selected.identity
+            )
 
-            if value.blob.removable_identity(value.identity, self.list_of_blobs.blobs_in_video[value.blob.frame_number]):
+            if value.blob.removable_identity(
+                value.identity,
+                self.list_of_blobs.blobs_in_video[value.blob.frame_number],
+            ):
                 self._del_centroids_btn.show()
             else:
                 self._del_centroids_btn.hide()
