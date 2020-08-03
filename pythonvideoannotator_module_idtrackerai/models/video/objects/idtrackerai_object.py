@@ -80,7 +80,8 @@ class IdtrackeraiObject(
             self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data
         )
 
-        self._add_idsgroup_btn = ControlButton('Add identities group', default=self.__group_identities)
+        self._add_idsgroup_btn = ControlButton('Add identities group',
+                                               default=self.__group_identities)
         self._save_btn = ControlButton(
             self.SAVE_BTN_LABEL, default=self.__save_updated_identities
         )
@@ -89,6 +90,10 @@ class IdtrackeraiObject(
             self.COMPUTE_GT_BTN_LABEL,
             default=self.__compute_groundtruth_accurcay,
         )
+        self._show_blob_info = ControlCheckBox('Show blob info',
+                                               default=False,
+                                               changed_event=self.__show_blob_info)
+        self._blob_info = ControlTextArea(readonly=True, visible=False)
 
         IModelGUI.__init__(self)
         VideoObject.__init__(self, video=video)
@@ -107,7 +112,8 @@ class IdtrackeraiObject(
 
         self.formset = [
             "_name",
-            '_first_gfrag',
+            "_show_blob_info",
+            "_blob_info",
             "_first_gfrag",
             "_add_centroidchk",
             "_del_centroids_btn",
@@ -115,8 +121,8 @@ class IdtrackeraiObject(
             "_reset_btn",
             "_closepaths_btn",
             "_save_btn",
+            "_add_idsgroup_btn",
             "_compute_gt_btn",
-            '_add_idsgroup_btn',
             '<a href="https://pythonvideoannotator.readthedocs.io/en/add-idtracker/modules/idtrackerai.html" target="_blank" >Idtrackerai plugin documentation</a>',
             " ",
         ]
@@ -150,6 +156,11 @@ class IdtrackeraiObject(
     ######################################################################
     ### Events ###########################################################
     ######################################################################
+    def __show_blob_info(self):
+        if self._show_blob_info.value:
+            self._blob_info.show()
+        else:
+            self._blob_info.hide()
 
     def __compute_groundtruth_accurcay(self):
         self._compute_gt_btn.label = self.COMPUTE_GT_BTN_LABEL_COMPUTING
@@ -531,8 +542,13 @@ class IdtrackeraiObject(
                 else False,
             )
 
-        #if self.selected:
-            # Draw the selected position
+            if self.selected:
+                if self.selected.blob == blob:
+                    self._blob_info.value = blob.summary
+            else:
+                self._blob_info.value = ""
+        # if self.selected:
+        # Draw the selected position
         #    p = self.selected.position
         #    cv2.circle(image, (int(round(p[0])), int(round(p[1]))), 14, (255, 255, 0), 2, lineType=cv2.LINE_AA)
 
