@@ -15,12 +15,9 @@ except Exception as e:
 
 from datetime import datetime
 from idtrackerai.utils.py_utils import get_spaced_colors_util
-from idtrackerai.postprocessing.get_trajectories import produce_output_dict
-from idtrackerai.postprocessing.trajectories_to_csv import (
+from idtrackerai.tracker.get_trajectories import produce_output_dict
+from idtrackerai.tracker.trajectories_to_csv import (
     convert_trajectories_file_to_csv_and_json,
-)
-from idtrackerai.postprocessing.identify_non_assigned_with_interpolation import (
-    assign_zeros_with_interpolation_identities,
 )
 from idtrackerai.groundtruth_utils.generate_groundtruth import (
     generate_groundtruth,
