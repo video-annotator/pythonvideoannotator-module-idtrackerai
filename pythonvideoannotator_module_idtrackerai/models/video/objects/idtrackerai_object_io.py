@@ -150,13 +150,14 @@ class IdtrackeraiObjectIO(object):
         self.list_of_blobs = np.load(path, allow_pickle=True).item()
         logger.info("List of blobs loaded")
         logger.info("Connecting list of blobs...")
-        self.list_of_blobs.reconnect()
+        self.list_of_blobs.compute_overlapping_between_subsequent_frames()
         logger.info("List of blobs connected")
         logger.info("Loading fragments...")
         path = os.path.join(project_path, "preprocessing", "fragments.npy")
         if (
             not os.path.exists(path)
-            and self.video_object.user_defined_parameters['number_of_animals'] == 1
+            and self.video_object.user_defined_parameters["number_of_animals"]
+            == 1
         ):
             self.list_of_framents = None
             logger.info("Fragments did not exist")
@@ -164,5 +165,6 @@ class IdtrackeraiObjectIO(object):
             self.list_of_framents = np.load(path, allow_pickle=True).item()
             logger.info("Loading fragments...")
         self.colors = get_spaced_colors_util(
-            self.video_object.user_defined_parameters['number_of_animals'], black=True
+            self.video_object.user_defined_parameters["number_of_animals"],
+            black=True,
         )
