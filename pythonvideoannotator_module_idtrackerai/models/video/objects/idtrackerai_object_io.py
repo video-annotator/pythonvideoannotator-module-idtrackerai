@@ -15,12 +15,9 @@ except Exception as e:
 
 from datetime import datetime
 from idtrackerai.utils.py_utils import get_spaced_colors_util
-from idtrackerai.postprocessing.get_trajectories import produce_output_dict
-from idtrackerai.postprocessing.trajectories_to_csv import (
+from idtrackerai.tracker.get_trajectories import produce_output_dict
+from idtrackerai.tracker.trajectories_to_csv import (
     convert_trajectories_file_to_csv_and_json,
-)
-from idtrackerai.postprocessing.identify_non_assigned_with_interpolation import (
-    assign_zeros_with_interpolation_identities,
 )
 from idtrackerai.groundtruth_utils.generate_groundtruth import (
     generate_groundtruth,
@@ -159,7 +156,7 @@ class IdtrackeraiObjectIO(object):
         path = os.path.join(project_path, "preprocessing", "fragments.npy")
         if (
             not os.path.exists(path)
-            and self.video_object.number_of_animals == 1
+            and self.video_object.user_defined_parameters['number_of_animals'] == 1
         ):
             self.list_of_framents = None
             logger.info("Fragments did not exist")
@@ -167,5 +164,5 @@ class IdtrackeraiObjectIO(object):
             self.list_of_framents = np.load(path, allow_pickle=True).item()
             logger.info("Loading fragments...")
         self.colors = get_spaced_colors_util(
-            self.video_object.number_of_animals, black=True
+            self.video_object.user_defined_parameters['number_of_animals'], black=True
         )

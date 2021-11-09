@@ -18,6 +18,8 @@ from pythonvideoannotator_models.models.video.objects.video_object import (
 from pythonvideoannotator_models_gui.models.imodel_gui import IModelGUI
 
 from pythonvideoannotator_module_idtrackerai import settings
+from idtrackerai.tracker.assign_them_all import close_trajectories_gaps
+
 
 logger = logging.getLogger(__name__)
 
@@ -350,6 +352,43 @@ class IdtrackeraiObject(
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
 
+
+    def __interpolate(
+        self,
+        video=None,
+        list_of_blobs=None,
+        list_of_fragments=None,
+        identity=None,
+        start=None,
+        end=None,
+    ):
+        """
+        Does the blobs positions interpolation
+
+        :param ListOfBlobs list_of_blobs:
+        :param identity:
+        :param int start:
+        :param int end:
+        :param ListOfFragments list_of_fragments:
+        """
+
+        if video.is_centroid_updated:
+            assert (
+                identity is not None
+                and start is not None
+                and end is not None
+                and list_of_blobs is not None
+            )
+
+            list_of_blobs.interpolate_from_user_generated_centroids(
+                video, identity, start, end
+            )
+
+        else:
+            assert list_of_fragments is not None and list_of_blobs is not None
+
+            close_trajectories_gaps(video, list_of_blobs, list_of_fragments)
+
     def __close_trajectories_gaps(self):
         """
         Make the interpolations.
@@ -388,7 +427,7 @@ class IdtrackeraiObject(
                         "Global interpolation is only possible if no centroids have been modified. Select an identity to perform a local interpolation"
                     )
 
-            self.video_object.interpolate(
+            self.__interpolate(
                 self.list_of_blobs, self.list_of_framents, identity, start, end
             )
 
