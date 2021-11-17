@@ -8,4 +8,4 @@ logging.getLogger("idtrackerai").setLevel(logging.DEBUG)
 from .settings import IDTRACKERAI_SHORT_KEYS
 
 conf.SHORT_KEYS.update(IDTRACKERAI_SHORT_KEYS)
-__version__ = "1.0.0a0"
+__version__ = "1.0.1a0"
