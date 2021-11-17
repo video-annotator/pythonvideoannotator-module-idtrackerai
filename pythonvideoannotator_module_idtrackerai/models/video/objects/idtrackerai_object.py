@@ -82,8 +82,9 @@ class IdtrackeraiObject(
             self.RESET_BTN_LABEL, default=self.__reset_manually_corrected_data
         )
 
-        self._add_idsgroup_btn = ControlButton('Add identities group',
-                                               default=self.__group_identities)
+        self._add_idsgroup_btn = ControlButton(
+            "Add identities group", default=self.__group_identities
+        )
         self._save_btn = ControlButton(
             self.SAVE_BTN_LABEL, default=self.__save_updated_identities
         )
@@ -92,9 +93,11 @@ class IdtrackeraiObject(
             self.COMPUTE_GT_BTN_LABEL,
             default=self.__compute_groundtruth_accurcay,
         )
-        self._show_blob_info = ControlCheckBox('Show blob info',
-                                               default=False,
-                                               changed_event=self.__show_blob_info)
+        self._show_blob_info = ControlCheckBox(
+            "Show blob info",
+            default=False,
+            changed_event=self.__show_blob_info,
+        )
         self._blob_info = ControlTextArea(readonly=True, visible=False)
 
         IModelGUI.__init__(self)
@@ -195,24 +198,34 @@ class IdtrackeraiObject(
 
     def __group_identities(self):
 
-        group_name = self.input_text('Group name', title='Type the name of the group', default=None)
+        group_name = self.input_text(
+            "Group name", title="Type the name of the group", default=None
+        )
 
         overwrite_name = True
         if group_name in self.video_object.identities_groups:
             overwrite_name = self.question(
-                'The group name {} is already in use. Do you want to overwrite it?'.format(group_name),
-                title='Overwrite group name'
+                "The group name {} is already in use. Do you want to overwrite it?".format(
+                    group_name
+                ),
+                title="Overwrite group name",
             )
         if overwrite_name:
-            identities = self.input_text('Identities', title='Type the identities separated by commas', default=None)
-            identities = [int(id) for id in identities.split(',')]
+            identities = self.input_text(
+                "Identities",
+                title="Type the identities separated by commas",
+                default=None,
+            )
+            identities = [int(id) for id in identities.split(",")]
             for identity in identities:
                 for group in self.video_object.identities_groups:
                     if identity in self.video_object.identities_groups[group]:
                         self.message(
-                            'The identity {} is already in the group {}'.format(identity, group),
-                            title='Identity already exists',
-                            msg_type='warning'
+                            "The identity {} is already in the group {}".format(
+                                identity, group
+                            ),
+                            title="Identity already exists",
+                            msg_type="warning",
                         )
                         return
 
@@ -352,7 +365,6 @@ class IdtrackeraiObject(
             logger.debug(str(e), exc_info=True)
             self.warning(str(e))
 
-
     def __interpolate(
         self,
         video=None,
@@ -428,7 +440,12 @@ class IdtrackeraiObject(
                     )
 
             self.__interpolate(
-                self.list_of_blobs, self.list_of_framents, identity, start, end
+                self.video_object,
+                self.list_of_blobs,
+                self.list_of_framents,
+                identity,
+                start,
+                end,
             )
 
             self.mainwindow.player.refresh()
@@ -648,8 +665,10 @@ class IdtrackeraiObject(
             self._reset_btn.label = self.RESET_BTN_LABEL_FOR_ID.format(
                 self.selected.identity
             )
-            self._closepaths_btn.label = self.INTERPOLATE_BTN_LABEL_FOR_ID.format(
-                self.selected.identity
+            self._closepaths_btn.label = (
+                self.INTERPOLATE_BTN_LABEL_FOR_ID.format(
+                    self.selected.identity
+                )
             )
 
             if value.blob.removable_identity(
